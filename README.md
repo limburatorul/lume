@@ -4,6 +4,8 @@ A keyboard launcher for Windows, built to be themed in plain CSS.
 
 Press `Alt+Space`, type a few letters, hit Enter. It learns which app you meant.
 
+![The launcher over a desktop, frosted glass, matching "pych" to PyCharm](docs/images/launcher-default.png)
+
 ## Why this exists
 
 Flow Launcher is good, but its themes are WPF `ResourceDictionary` XAML: to move a
@@ -18,6 +20,20 @@ prompt, Start-menu and desktop shortcuts). `Lume-<version>-portable.exe` is a
 single self-extracting executable that needs no install.
 
 `Lume.exe --settings` opens the settings window directly.
+
+### Windows will warn you the first time
+
+The builds are **not code-signed**, so Microsoft Defender SmartScreen shows
+"Windows protected your PC" and hides the run button behind **More info →
+Run anyway**. Some browsers also flag the download.
+
+This is not a detection of anything in the app — SmartScreen reacts to any
+executable that lacks a signature and download history. If that is not good
+enough for you, and it is a reasonable thing to insist on, build it yourself:
+`npm install && npm run package` produces exactly the same executables from the
+source in this repository.
+
+See [Code signing](#code-signing) for what it would take to remove the warning.
 
 ## Running from source
 
@@ -39,6 +55,11 @@ node scripts/inspect.mjs 9333 renderer "getComputedStyle(document.querySelector(
 That is how the theme and settings plumbing is checked without guessing from
 screenshots — `renderer` targets the launcher, `settings` the settings window.
 
+`node scripts/shots.mjs` regenerates the images in this README. The frosted
+glass only exists in the composited desktop, so those have to be real screen
+grabs; the script paints a full-screen backdrop first and crops to the window,
+which keeps whatever is actually on your desktop out of the pictures.
+
 To build the installer and portable executable into `release/`:
 
 ```bash
@@ -56,6 +77,8 @@ Arduino is already first.
 **Calculator** — type an expression: `sqrt(144) * 2`, `2^10`, `17 % 5`, `12k / 4`,
 `0xff`. Enter copies the result. Parsing is a hand-written tokenizer and shunting-yard
 evaluator, not `eval`.
+
+![A calculation evaluated inline](docs/images/launcher-calc.png)
 
 **Web search** — `g rust traits`, `yt lofi`, `gh electron`, and so on. Engines are
 defined in `config.json`. Typing a bare domain (`github.com/foo`) offers to open it.
@@ -79,11 +102,17 @@ launcher's own `Lume: …` commands (rebuild index, open themes folder, devtools
 | `Alt+1` … `Alt+9` | Run result N directly |
 | `Esc` | Clear the query, then hide |
 
+`Tab` opens every action the selected result supports:
+
+![The actions menu open under a result](docs/images/launcher-actions.png)
+
 ## Settings
 
 Open the settings window from the tray icon, by typing `settings` in the
 launcher, or with `Lume.exe --settings`. Changes apply immediately — there is no
 Save button, and everything is written straight to `config.json`.
+
+![The settings window, Appearance section](docs/images/settings.png)
 
 - **Appearance** — theme per colour scheme, background material, opacity, window
   width, row and icon size, fonts, corner radius, vertical position, animation.
@@ -160,6 +189,12 @@ the selected row, `backdrop-filter` on individual rows, `::after` highlights. Se
 `themes/default.css` for a commented starting point, or copy any of `carbon.css`,
 `glass.css`, `light.css`.
 
+The same launcher in `carbon` and `light` — no code changed, only the stylesheet:
+
+![The carbon theme, solid dark with a blue accent](docs/images/launcher-carbon.png)
+
+![The light theme](docs/images/launcher-light.png)
+
 Saving a theme file re-applies it in the running app. `Lume: Toggle developer tools`
 opens Chromium devtools against the launcher window, so you can inspect and tweak
 live before writing the change into the file.
@@ -200,6 +235,45 @@ which is watched — edit it by hand and the running app picks the change up.
 The file is UTF-8 without a BOM. Lume tolerates a BOM if your editor adds one,
 but PowerShell 5.1's `Get-Content`/`Out-File` will mangle non-ASCII values on a
 round trip unless you pass `-Encoding UTF8` — prefer the settings window.
+
+## Code signing
+
+Signing is what removes the SmartScreen warning, and it is worth being precise
+about what it buys, because the situation changed recently.
+
+**Signing alone does not silence SmartScreen.** Reputation accrues to the
+certificate and to each file hash, and it is earned through clean downloads over
+time. Extended Validation (EV) certificates used to grant reputation
+immediately; Microsoft removed that behaviour in 2024, and its own documentation
+now states plainly that EV no longer bypasses the warning. So paying the EV
+premium purely to skip SmartScreen no longer makes sense — an OV certificate
+builds reputation on the same terms.
+
+What signing does give you straight away: your name shown as the publisher
+instead of "Unknown publisher", no warning at all once reputation is
+established, and one identity carried across releases so each new version starts
+from the trust the previous ones earned.
+
+Since June 2023 the private key may no longer live in a `.pfx` on disk — it has
+to sit on a hardware token or in a cloud HSM. That rules out the old "commit an
+encrypted certificate to CI" approach and shapes the options:
+
+| Option | Rough cost | Notes |
+| --- | --- | --- |
+| [Azure Trusted Signing](https://azure.microsoft.com/en-us/pricing/details/trusted-signing/) | $9.99/month | Cheapest credible route, and open to individual developers. Identity check is photo ID plus a liveness selfie. Microsoft manages the key, so there is no token to carry. |
+| [Certum Open Source](https://shop.certum.eu/code-signing.html) | ~€69 first year, ~€29 renewal | Aimed at open-source authors. Ships as a smartcard and reader, or through their SimplySign cloud service if you would rather not have hardware. |
+| DigiCert / Sectigo / SSL.com / GlobalSign OV | ~$200–400/year | The traditional CAs. No advantage over the above for SmartScreen purposes. |
+| Self-signed | free | Useless here. It only helps on machines that already trust your certificate, so it does nothing for anyone downloading a release. |
+| [winget](https://github.com/microsoft/winget-pkgs) or the Microsoft Store | free | Sidesteps the question: Store packages are signed by Microsoft, and installing through winget avoids the browser download path entirely. |
+
+Note that from 27 February 2026 a code signing certificate is valid for at most
+459 days, so renewals come round sooner than they used to.
+
+Once you have a certificate, electron-builder does the rest. For Trusted Signing
+it is an `azureSignOptions` block in the `win` section of `package.json`; for a
+token or cloud CSP it is `signtoolOptions` pointing at the certificate. Whichever
+you pick, sign **and timestamp** every release with the same certificate —
+switching certificates resets the reputation you have accumulated.
 
 ## Layout
 
