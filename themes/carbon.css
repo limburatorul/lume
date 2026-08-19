@@ -1,0 +1,60 @@
+/*
+ * Lume - carbon
+ * Solid dark surface with a blue accent, in the spirit of the Game Browser
+ * palette. Pair with "backdrop": "none" in config.json for a fully opaque look.
+ */
+
+:root {
+  --surface-rgb: 23 24 27;
+  --surface-opacity: 1;
+  --border: #303338;
+  --border-width: 1px;
+  --radius: 10px;
+  --shadow: 0 20px 56px rgba(0, 0, 0, 0.6);
+  --padding: 6px;
+
+  --font: "Segoe UI", system-ui, sans-serif;
+  --text: #ececee;
+  --text-dim: #6f7278;
+  --accent: #4c8bf5;
+  --divider: #26282c;
+
+  --input-height: 54px;
+  --input-size: 18px;
+  --input-padding: 16px;
+  --input-placeholder: #4a4d53;
+  --search-glyph: "\203A";
+  --search-glyph-size: 22px;
+  --search-glyph-color: #4c8bf5;
+
+  --row-height: 46px;
+  --row-gap: 1px;
+  --row-radius: 6px;
+  --row-bg-hover: #1e2024;
+  --row-bg-selected: #23262c;
+  --row-accent-width: 2px;
+  --row-accent-color: #4c8bf5;
+
+  --title-size: 14px;
+  --title-weight: 450;
+  --title-color: #ececee;
+  --title-color-dim: #8b8e95;
+  --subtitle-size: 11px;
+  --subtitle-color: #6f7278;
+  --match-color: #ffffff;
+  --match-weight: 700;
+
+  --icon-size: 26px;
+  --icon-radius: 4px;
+
+  --hint-size: 10px;
+  --hint-color: #6f7278;
+  --hint-bg: #23262c;
+  --hint-radius: 3px;
+
+  --anim-duration: 80ms;
+}
+
+.row.selected {
+  box-shadow: inset 0 0 0 1px #303338;
+}

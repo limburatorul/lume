@@ -1,0 +1,65 @@
+/*
+ * Lume - glass
+ * Maximum translucency. Best with "backdrop": "acrylic" in config.json.
+ */
+
+:root {
+  /* A dark scrim keeps the white type readable over any wallpaper. */
+  --surface-rgb: 14 14 20;
+  --surface-opacity: 0.55;
+  --border: rgba(255, 255, 255, 0.16);
+  --border-width: 1px;
+  --radius: 20px;
+  --shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  --padding: 10px;
+
+  --font: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --text: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.5);
+  --accent: #ffffff;
+  --divider: rgba(255, 255, 255, 0.1);
+
+  --input-height: 62px;
+  --input-size: 21px;
+  --input-weight: 300;
+  --input-padding: 22px;
+  --input-placeholder: rgba(255, 255, 255, 0.35);
+  --search-glyph: "";
+
+  --row-height: 54px;
+  --row-gap: 4px;
+  --row-radius: 14px;
+  --row-padding: 12px;
+  --row-bg: rgba(255, 255, 255, 0.03);
+  --row-bg-hover: rgba(255, 255, 255, 0.08);
+  --row-bg-selected: rgba(255, 255, 255, 0.16);
+  --row-accent-width: 0px;
+
+  --title-size: 15px;
+  --title-weight: 400;
+  --title-color: rgba(255, 255, 255, 0.95);
+  --title-color-dim: rgba(255, 255, 255, 0.68);
+  --subtitle-size: 11.5px;
+  --subtitle-color: rgba(255, 255, 255, 0.45);
+  --match-color: #ffffff;
+  --match-weight: 700;
+  --match-bg: rgba(255, 255, 255, 0.18);
+
+  --icon-size: 32px;
+  --icon-radius: 9px;
+
+  --hint-size: 10px;
+  --hint-bg: rgba(255, 255, 255, 0.12);
+  --hint-color: rgba(255, 255, 255, 0.6);
+  --hint-radius: 6px;
+
+  --anim-duration: 140ms;
+}
+
+.row {
+  backdrop-filter: blur(6px);
+}
+
+.row.selected {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}

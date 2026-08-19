@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src data:; style-src 'self' 'unsafe-inline'; script-src 'self';"
+    />
+    <title>Lume Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <nav class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">◐</span>
+          <div>
+            <div class="brand-name">Lume</div>
+            <div class="brand-version" id="version"></div>
+          </div>
+        </div>
+        <ul class="nav" id="nav"></ul>
+        <div class="sidebar-foot">
+          <button class="ghost" id="open-themes">Themes folder</button>
+          <button class="ghost" id="open-config">config.json</button>
+        </div>
+      </nav>
+      <main class="content" id="content"></main>
+    </div>
+    <div class="toast" id="toast" hidden></div>
+    <script src="settings.js"></script>
+  </body>
+</html>

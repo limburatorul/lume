@@ -1,0 +1,8 @@
+node_modules/
+dist/
+release/
+*.log
+shots/
+release/
+.devtest/
+.exp/

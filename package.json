@@ -1,0 +1,82 @@
+{
+  "name": "lume-launcher",
+  "productName": "Lume",
+  "version": "0.1.0",
+  "description": "Fast, CSS-themeable keyboard launcher for Windows",
+  "main": "dist/main/index.js",
+  "type": "module",
+  "author": "limburatorul",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs --watch",
+    "start": "npm run build && electron .",
+    "typecheck": "tsc --noEmit",
+    "package": "npm run build && electron-builder --win",
+    "test": "node scripts/smoke.mjs",
+    "shot": "node scripts/screenshot.mjs",
+    "package:dir": "npm run build && electron-builder --win --dir"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "electron": "^33.3.0",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.2"
+  },
+  "build": {
+    "appId": "dev.tucu.lume",
+    "productName": "Lume",
+    "copyright": "Copyright (c) 2026 limburatorul",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/uwp.ps1"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Lume",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    }
+  },
+  "allowScripts": {
+    "electron@33.4.11": true,
+    "esbuild@0.24.2": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/limburatorul/lume.git"
+  }
+}

@@ -1,0 +1,366 @@
+/*
+ * Structural stylesheet. It defines the layout and a full set of custom
+ * properties with sane defaults; a theme file only needs to override the
+ * variables it cares about. Themes are loaded after this file, so any rule
+ * they write wins.
+ */
+
+:root {
+  /*
+   * Surface. Themes set --surface-rgb (a bare "r g b" triple) and a default
+   * --surface-opacity; the settings panel overrides the opacity alone, which
+   * is why the colour and its alpha are kept as separate properties.
+   * A theme wanting something other than a flat fill can still override --bg.
+   */
+  --surface-rgb: 22 22 28;
+  --surface-opacity: 0.82;
+  --bg: rgb(var(--surface-rgb) / var(--surface-opacity));
+  --border: rgba(255, 255, 255, 0.08);
+  --border-width: 1px;
+  --radius: 14px;
+  --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+  --padding: 8px;
+
+  /* Type */
+  --font: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "Consolas", ui-monospace, monospace;
+  --text: rgba(255, 255, 255, 0.95);
+  --text-dim: rgba(255, 255, 255, 0.45);
+  --accent: #7c6cf5;
+
+  /* Query box */
+  --input-height: 56px;
+  --input-size: 19px;
+  --input-weight: 400;
+  --input-padding: 16px;
+  --input-color: var(--text);
+  --input-placeholder: rgba(255, 255, 255, 0.3);
+  --search-glyph: "";
+  --search-glyph-size: 17px;
+  --search-glyph-color: var(--text-dim);
+  --divider: rgba(255, 255, 255, 0.07);
+
+  /* Rows */
+  --row-height: 50px;
+  --row-gap: 2px;
+  --row-radius: 9px;
+  --row-padding: 10px;
+  --row-bg: transparent;
+  --row-bg-hover: rgba(255, 255, 255, 0.05);
+  --row-bg-selected: rgba(255, 255, 255, 0.1);
+  --row-accent-width: 0px;
+  --row-accent-color: var(--accent);
+  --title-size: 14.5px;
+  --title-weight: 500;
+  --title-color: var(--text);
+  /* Used only when the title contains highlighted characters, so the matched
+     part reads as the bright foreground. Titles with no match stay full. */
+  --title-color-dim: var(--title-color);
+  --subtitle-size: 11.5px;
+  --subtitle-color: var(--text-dim);
+  --match-color: var(--accent);
+  --match-weight: 700;
+  --match-bg: transparent;
+
+  /* Icons */
+  --icon-size: 30px;
+  --icon-radius: 6px;
+  --glyph-size: 17px;
+
+  /* Right-hand index hint */
+  --hint-size: 10.5px;
+  --hint-color: var(--text-dim);
+  --hint-bg: rgba(255, 255, 255, 0.07);
+  --hint-radius: 5px;
+
+  /* Motion */
+  --anim-duration: 110ms;
+  --anim-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: transparent;
+  /* The window itself is the panel; nothing may paint outside its corners. */
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* With a Windows backdrop the OS paints the material; a plain window paints
+   its own surface. `--bg` covers both because the theme picks the value. */
+/* Shown with a short rise; disabled when --anim-duration is 0. */
+@keyframes lume-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.995);
+  }
+}
+
+.lume {
+  animation: lume-in var(--anim-duration) var(--anim-ease);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: var(--border-width) solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  color: var(--text);
+}
+
+html[data-animate="false"] .lume {
+  animation: none;
+}
+
+/* ---------- query box ---------- */
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--input-height);
+  min-height: var(--input-height);
+  padding: 0 var(--input-padding);
+  position: relative;
+}
+
+.search-glyph {
+  font-size: var(--search-glyph-size);
+  color: var(--search-glyph-color);
+  line-height: 1;
+  flex: none;
+}
+.search-glyph::before {
+  content: var(--search-glyph);
+}
+.search-glyph:empty::before {
+  display: inline-block;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--input-size);
+  font-weight: var(--input-weight);
+  color: var(--input-color);
+  caret-color: var(--accent);
+  user-select: text;
+  cursor: text;
+}
+
+.search-input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.search-badge {
+  flex: none;
+  font-size: var(--hint-size);
+  color: var(--hint-color);
+  background: var(--hint-bg);
+  border-radius: var(--hint-radius);
+  padding: 3px 7px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.search-badge:empty {
+  display: none;
+}
+
+/* ---------- results ---------- */
+
+.results-wrap {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.results-wrap.empty {
+  display: none;
+}
+
+.results {
+  list-style: none;
+  padding: var(--padding);
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+  border-top: 1px solid var(--divider);
+  padding-top: var(--padding);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: var(--row-height);
+  min-height: var(--row-height);
+  padding: 0 var(--row-padding);
+  border-radius: var(--row-radius);
+  background: var(--row-bg);
+  position: relative;
+  overflow: hidden;
+  transition: background var(--anim-duration) var(--anim-ease);
+}
+
+.row:hover {
+  background: var(--row-bg-hover);
+}
+
+.row.selected {
+  background: var(--row-bg-selected);
+}
+
+.row.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--row-accent-width);
+  background: var(--row-accent-color);
+  border-radius: 0 2px 2px 0;
+}
+
+.row-icon {
+  flex: none;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  border-radius: var(--icon-radius);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.row-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.row-icon .glyph {
+  font-size: var(--glyph-size);
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+.row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.row-title {
+  font-size: var(--title-size);
+  font-weight: var(--title-weight);
+  color: var(--title-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-title:has(mark) {
+  color: var(--title-color-dim);
+}
+
+.row-title mark {
+  background: var(--match-bg);
+  color: var(--match-color);
+  font-weight: var(--match-weight);
+}
+
+.row-sub {
+  font-size: var(--subtitle-size);
+  color: var(--subtitle-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: ltr;
+}
+
+.row-sub:empty {
+  display: none;
+}
+
+.row-hint {
+  flex: none;
+  font-size: var(--hint-size);
+  color: var(--hint-color);
+  background: var(--hint-bg);
+  border-radius: var(--hint-radius);
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  opacity: 0;
+}
+
+.row.selected .row-hint,
+.row:hover .row-hint {
+  opacity: 1;
+}
+
+/* ---------- context menu (alternate actions) ---------- */
+
+.context[hidden] {
+  display: none;
+}
+
+.context {
+  border-top: 1px solid var(--divider);
+  padding: var(--padding);
+}
+
+.context-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--row-gap);
+}
+
+.context-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: 36px;
+  padding: 0 var(--row-padding);
+  border-radius: var(--row-radius);
+  font-size: var(--title-size);
+  color: var(--title-color);
+}
+
+.context-item.selected {
+  background: var(--row-bg-selected);
+}
+
+.context-item .hint {
+  font-size: var(--hint-size);
+  color: var(--hint-color);
+  font-family: var(--font-mono);
+}
+
+/* ---------- empty state ---------- */
+
+.empty-state {
+  padding: 18px var(--input-padding) 22px;
+  font-size: var(--subtitle-size);
+  color: var(--text-dim);
+  border-top: 1px solid var(--divider);
+}

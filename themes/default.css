@@ -1,0 +1,91 @@
+/*
+ * Lume - default theme
+ *
+ * Every value below is a CSS custom property consumed by base.css. Change one,
+ * save the file, and the launcher restyles itself immediately - no restart.
+ * Copy this file under a new name to start your own theme, then select it with
+ * "theme": "<filename without .css>" in config.json.
+ */
+
+:root {
+  /* The surface colour. Its alpha lives in --surface-opacity so the settings
+     panel can dial the frosted-glass strength without rewriting the theme. */
+  --surface-rgb: 20 20 26;
+  --surface-opacity: 0.82;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-width: 1px;
+  --radius: 16px;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  --padding: 8px;
+
+  --font: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --text: rgba(255, 255, 255, 0.96);
+  --text-dim: rgba(255, 255, 255, 0.42);
+  --accent: #8b7cf6;
+  --divider: rgba(255, 255, 255, 0.06);
+
+  /* Query box */
+  --input-height: 58px;
+  --input-size: 19px;
+  --input-weight: 400;
+  --input-padding: 18px;
+  --input-placeholder: rgba(255, 255, 255, 0.28);
+  --search-glyph: "\1F50D";
+  --search-glyph-size: 15px;
+  --search-glyph-color: rgba(255, 255, 255, 0.3);
+
+  /* Rows */
+  --row-height: 52px;
+  --row-gap: 2px;
+  --row-radius: 10px;
+  --row-padding: 10px;
+  --row-bg-hover: rgba(255, 255, 255, 0.045);
+  --row-bg-selected: rgba(139, 124, 246, 0.18);
+  --row-accent-width: 3px;
+  --row-accent-color: var(--accent);
+
+  --title-size: 14.5px;
+  --title-weight: 450;
+  --title-color: rgba(255, 255, 255, 0.94);
+  --title-color-dim: rgba(255, 255, 255, 0.62);
+  --subtitle-size: 11.5px;
+  --subtitle-color: rgba(255, 255, 255, 0.38);
+  /* Matched characters read brighter and heavier than the rest of the title. */
+  --match-color: #ffffff;
+  --match-weight: 700;
+
+  --icon-size: 30px;
+  --icon-radius: 7px;
+  --glyph-size: 16px;
+
+  --hint-size: 10px;
+  --hint-color: rgba(255, 255, 255, 0.4);
+  --hint-bg: rgba(255, 255, 255, 0.08);
+  --hint-radius: 5px;
+
+  --anim-duration: 110ms;
+}
+
+/* A soft top highlight, the way Windows 11 surfaces catch light. */
+.lume::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.lume {
+  position: relative;
+}
+
+/* Selected row gets a gradient rather than a flat block. */
+.row.selected {
+  background: linear-gradient(
+    90deg,
+    rgba(139, 124, 246, 0.34) 0%,
+    rgba(139, 124, 246, 0.16) 60%,
+    rgba(139, 124, 246, 0.09) 100%
+  );
+}
