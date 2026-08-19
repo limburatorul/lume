@@ -114,6 +114,7 @@ function bootstrap(): Bootstrap {
     css: themes.css(active),
     activeTheme: active,
     version: app.getVersion(),
+    indexCount: appIndex.stats().total,
   }
 }
 

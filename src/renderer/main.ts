@@ -20,6 +20,9 @@ const el = {
   contextList: document.getElementById('context-list') as HTMLUListElement,
   theme: document.getElementById('theme') as HTMLStyleElement,
   overrides: document.getElementById('overrides') as HTMLStyleElement,
+  emptyState: document.getElementById('empty-state') as HTMLDivElement,
+  emptyTitle: document.getElementById('empty-title') as HTMLDivElement,
+  emptyHints: document.getElementById('empty-hints') as HTMLDivElement,
 }
 
 let items: ResultItem[] = []
@@ -28,6 +31,8 @@ let contextOpen = false
 let contextSelected = 0
 let queryToken = 0
 let config: Bootstrap['config'] | null = null
+/** Entries in the app index; 0 while the first scan is still running. */
+let indexCount = 0
 
 /** Icon bitmaps, keyed by the `iconKey` the main process handed us. */
 const iconCache = new Map<string, string | null>()
@@ -74,15 +79,51 @@ function loadIcon(key: string, target: HTMLElement) {
   })
 }
 
+/**
+ * Explains why the list is empty instead of leaving a bare search box. On a
+ * fresh install there is no usage history to draw a home screen from, so
+ * without this the first thing a new user sees is a blank bar.
+ */
+function renderEmptyState() {
+  const query = el.input.value.trim()
+  el.emptyHints.replaceChildren()
+
+  if (query) {
+    el.emptyTitle.textContent = 'No results for "' + query + '"'
+  } else if (!indexCount) {
+    el.emptyTitle.textContent = 'Indexing applications…'
+  } else {
+    el.emptyTitle.textContent = 'Type to search ' + indexCount.toLocaleString() + ' apps and commands'
+    const prefix = config?.shellPrefix ?? '>'
+    const engine = config?.searchEngines.find((e) => e.keyword === config?.defaultEngine)
+    const hints: Array<[string, string]> = [
+      ['2+2', 'calculate'],
+      [(engine?.keyword ?? 'g') + ' …', 'search ' + (engine?.name ?? 'the web')],
+      [prefix + ' …', 'run a command'],
+      ['settings', 'open settings'],
+    ]
+    for (const [key, label] of hints) {
+      const span = document.createElement('span')
+      const code = document.createElement('code')
+      code.textContent = key
+      span.append(code, document.createTextNode(label))
+      el.emptyHints.append(span)
+    }
+  }
+  el.emptyState.hidden = false
+}
+
 function renderResults() {
   el.list.replaceChildren()
 
   if (!items.length) {
     el.wrap.classList.add('empty')
+    renderEmptyState()
     reportHeight()
     return
   }
   el.wrap.classList.remove('empty')
+  el.emptyState.hidden = true
 
   items.forEach((item, index) => {
     const li = document.createElement('li')
@@ -368,6 +409,7 @@ function overrideCss(cfg: Bootstrap['config']): string {
 
 function applyBootstrap(b: Bootstrap) {
   config = b.config
+  indexCount = b.indexCount
   el.theme.textContent = b.css
   el.overrides.textContent = overrideCss(b.config)
   document.documentElement.dataset.backdrop = b.config.backdrop
@@ -406,8 +448,11 @@ api.onHidden(() => {
   closeContext()
 })
 
-api.onIndexUpdated(() => {
-  if (el.input.value) void runQuery()
+api.onIndexUpdated((count) => {
+  indexCount = count
+  // Refresh either way: a query may match newly indexed apps, and an empty one
+  // needs to stop saying "Indexing…".
+  void runQuery()
 })
 
 void (async () => {

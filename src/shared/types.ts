@@ -134,6 +134,8 @@ export interface Bootstrap {
   /** Name of the theme actually in effect once colorScheme is resolved. */
   activeTheme: string
   version: string
+  /** Entries indexed so far; 0 means the first scan has not finished. */
+  indexCount: number
 }
 
 export interface IndexStats {

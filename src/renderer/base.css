@@ -358,9 +358,40 @@ html[data-animate="false"] .lume {
 
 /* ---------- empty state ---------- */
 
+.empty-state[hidden] {
+  display: none;
+}
+
+/* Shown instead of the result list when there is nothing to list, so a fresh
+   install is never just a blank box. */
 .empty-state {
-  padding: 18px var(--input-padding) 22px;
-  font-size: var(--subtitle-size);
-  color: var(--text-dim);
+  padding: 16px var(--input-padding) 18px;
   border-top: 1px solid var(--divider);
+}
+
+.empty-title {
+  font-size: var(--title-size);
+  color: var(--title-color);
+  margin-bottom: 8px;
+}
+
+.empty-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: var(--subtitle-size);
+  color: var(--subtitle-color);
+}
+
+.empty-hints span {
+  white-space: nowrap;
+}
+
+.empty-hints code {
+  font-family: var(--font-mono);
+  color: var(--hint-color);
+  background: var(--hint-bg);
+  border-radius: var(--hint-radius);
+  padding: 1px 5px;
+  margin-right: 5px;
 }
