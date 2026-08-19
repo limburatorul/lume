@@ -1,7 +1,7 @@
 {
   "name": "lume-launcher",
   "productName": "Lume",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Fast, CSS-themeable keyboard launcher for Windows",
   "main": "dist/main/index.js",
   "type": "module",
@@ -69,7 +69,14 @@
       "shortcutName": "Lume",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "limburatorul",
+        "repo": "lume"
+      }
+    ]
   },
   "allowScripts": {
     "electron@33.4.11": true,
@@ -78,5 +85,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/limburatorul/lume.git"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

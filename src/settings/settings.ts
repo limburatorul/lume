@@ -1,4 +1,4 @@
-import type { Config, IndexStats, SearchEngine, ThemeInfo } from '../shared/types.js'
+import type { Config, IndexStats, SearchEngine, ThemeInfo, UpdateStatus } from '../shared/types.js'
 import type { LumeSettingsApi } from '../preload/settings.js'
 
 declare global {
@@ -12,6 +12,8 @@ const api = window.lumeSettings
 let config: Config
 let themes: ThemeInfo[] = []
 let stats: IndexStats = { total: 0, byKind: {}, builtAt: 0 }
+let updateStatus: UpdateStatus = { state: 'idle' }
+let appVersion = ''
 let current = 'appearance'
 
 /* ------------------------------------------------------------ value access */
@@ -395,6 +397,19 @@ const SECTIONS: Section[] = [
             label: 'Show tray icon',
             help: 'With this off, reach these settings by pressing the hotkey and typing “settings”.',
           },
+        ],
+      },
+      {
+        title: 'Updates',
+        fields: [
+          {
+            kind: 'toggle',
+            path: 'checkForUpdates',
+            label: 'Check for updates automatically',
+            help:
+              'Asks GitHub for a newer release shortly after start, then every six hours. An installed build downloads it and applies it on the next restart; the portable build tells you and links to the download.',
+          },
+          { kind: 'custom', render: renderUpdatePanel },
         ],
       },
     ],
@@ -804,6 +819,87 @@ function renderIndexPanel(): HTMLElement {
   return wrap
 }
 
+function renderUpdatePanel(): HTMLElement {
+  const wrap = el('div')
+  const line = el('div', { class: 'field' })
+  const info = el('div')
+  const controls = el('div', { class: 'field-control' })
+
+  const title = el('div', { class: 'field-label' })
+  const detail = el('div', { class: 'field-help' })
+  info.append(title, detail)
+
+  const check = el('button', { class: 'ghost', textContent: 'Check now' })
+  check.addEventListener('click', () => {
+    check.disabled = true
+    void api.checkForUpdates().then((s) => {
+      updateStatus = s
+      check.disabled = false
+      paint()
+    })
+  })
+
+  const action = el('button', { class: 'primary' })
+  action.hidden = true
+
+  function paint() {
+    const s = updateStatus
+    action.hidden = true
+    action.onclick = null
+
+    switch (s.state) {
+      case 'checking':
+        title.textContent = 'Checking…'
+        detail.textContent = ''
+        break
+      case 'available':
+        title.textContent = 'Version ' + s.version + ' is available'
+        if (s.downloadUrl) {
+          // This build cannot replace itself, so point at the release instead.
+          detail.textContent = 'You are on ' + appVersion + ' — ' + (s.reason ?? 'update manually') + '.'
+          action.textContent = 'Open download page'
+          action.hidden = false
+          action.onclick = () => void api.openDownloadPage()
+        } else {
+          detail.textContent = 'Downloading in the background…'
+        }
+        break
+      case 'downloading':
+        title.textContent = 'Downloading… ' + s.percent + '%'
+        detail.textContent = ''
+        break
+      case 'ready':
+        title.textContent = 'Version ' + s.version + ' is ready'
+        detail.textContent = 'It installs when Lume restarts.'
+        action.textContent = 'Restart now'
+        action.hidden = false
+        action.onclick = () => void api.installUpdate()
+        break
+      case 'current':
+        title.textContent = 'Up to date'
+        detail.textContent = 'Version ' + appVersion + ', checked at ' + new Date(s.checkedAt).toLocaleTimeString() + '.'
+        break
+      case 'error':
+        title.textContent = 'Could not check for updates'
+        detail.textContent = s.message
+        break
+      case 'unsupported':
+        title.textContent = 'Updates unavailable'
+        detail.textContent = s.reason
+        break
+      default:
+        title.textContent = 'Version ' + appVersion
+        detail.textContent = 'No check has run yet.'
+    }
+  }
+
+  paint()
+  controls.append(action, check)
+  line.append(info, controls)
+  wrap.append(line)
+  return wrap
+}
+
 function renderDataPanel(): HTMLElement {
   const wrap = el('div', { class: 'row-actions' })
 
@@ -923,6 +1019,11 @@ api.onThemesChanged((list) => {
   if (current === 'appearance') renderSection()
 })
 
+api.onUpdateStatus((s) => {
+  updateStatus = s
+  if (current === 'startup') renderSection()
+})
+
 api.onConfigChanged((c) => {
   // Only redraw for changes made elsewhere; our own writes already updated the
   // local copy, and redrawing would fight the control the user is holding.
@@ -932,8 +1033,14 @@ api.onConfigChanged((c) => {
 })
 
 void (async () => {
-  ;[config, themes, stats] = await Promise.all([api.getConfig(), api.listThemes(), api.indexStats()])
-  document.getElementById('version')!.textContent = 'v' + (await api.appVersion())
+  ;[config, themes, stats, updateStatus, appVersion] = await Promise.all([
+    api.getConfig(),
+    api.listThemes(),
+    api.indexStats(),
+    api.updateStatus(),
+    api.appVersion(),
+  ])
+  document.getElementById('version')!.textContent = 'v' + appVersion
   renderNav()
   renderSection()
 })()

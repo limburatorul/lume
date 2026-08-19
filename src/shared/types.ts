@@ -111,6 +111,8 @@ export interface Config {
   launchOnStartup: boolean
   hideOnStartup: boolean
   showTrayIcon: boolean
+  /** Check GitHub releases in the background and install on the next restart. */
+  checkForUpdates: boolean
 
   // --- Search ---
   extraAppFolders: string[]
@@ -137,6 +139,24 @@ export interface Bootstrap {
   /** Entries indexed so far; 0 means the first scan has not finished. */
   indexCount: number
 }
+
+/** Where the updater currently stands, as shown in the settings window. */
+export type UpdateStatus =
+  | { state: 'idle' }
+  | { state: 'checking' }
+  | {
+      state: 'available'
+      version: string
+      /** Set when this build cannot install by itself and must be downloaded. */
+      downloadUrl?: string
+      /** Why installing is not possible, shown next to the download link. */
+      reason?: string
+    }
+  | { state: 'downloading'; percent: number }
+  | { state: 'ready'; version: string }
+  | { state: 'current'; checkedAt: number }
+  | { state: 'error'; message: string }
+  | { state: 'unsupported'; reason: string }
 
 export interface IndexStats {
   total: number

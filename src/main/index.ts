@@ -21,6 +21,7 @@ import { settings } from './settings.js'
 import { notifySettings, openSettings, settingsWindow } from './settingsWindow.js'
 import { usage } from './store.js'
 import { themes } from './themes.js'
+import { updater } from './updater.js'
 import { launcherWindow } from './window.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -95,6 +96,8 @@ function buildTray() {
       { label: 'Show Lume', click: () => launcherWindow.show() },
       { label: 'Settings…', click: () => openSettings() },
       { type: 'separator' },
+      { label: 'Check for updates…', click: () => void checkUpdatesFromTray() },
+      { type: 'separator' },
       { label: 'Rebuild app index', click: () => void appIndex.rebuild() },
       { label: 'Open themes folder', click: () => void shell.openPath(themes.dir) },
       { label: 'Developer tools', click: () => launcherWindow.toggleDevTools() },
@@ -104,6 +107,29 @@ function buildTray() {
   )
   tray.on('click', () => launcherWindow.toggle())
   updateTray()
+}
+
+/** Checks on demand and reports the outcome, since the tray has no UI of its own. */
+async function checkUpdatesFromTray() {
+  const status = await updater.check()
+  if (!Notification.isSupported()) {
+    openSettings()
+    return
+  }
+  if (status.state === 'available') {
+    new Notification({
+      title: 'Lume ' + status.version + ' is available',
+      body: status.downloadUrl ? 'Open the download page from Settings.' : 'Downloading it now.',
+    }).show()
+  } else if (status.state === 'ready') {
+    new Notification({ title: 'Lume ' + status.version + ' is ready', body: 'Restart to finish.' }).show()
+  } else if (status.state === 'current') {
+    new Notification({ title: 'Lume is up to date', body: 'You are on ' + app.getVersion() + '.' }).show()
+  } else if (status.state === 'error') {
+    new Notification({ title: 'Update check failed', body: status.message }).show()
+  } else {
+    openSettings()
+  }
 }
 
 function bootstrap(): Bootstrap {
@@ -197,6 +223,11 @@ function registerIpc() {
 
   ipcMain.handle('settings:preview', () => launcherWindow.show())
   ipcMain.handle('settings:version', () => app.getVersion())
+
+  ipcMain.handle('settings:updateStatus', () => updater.current)
+  ipcMain.handle('settings:checkForUpdates', () => updater.check())
+  ipcMain.handle('settings:installUpdate', () => updater.install())
+  ipcMain.handle('settings:openDownloadPage', () => updater.openDownloadPage())
 }
 
 function wireEvents() {
@@ -211,6 +242,7 @@ function wireEvents() {
     registerHotkey()
     buildTray()
     applyStartupSetting()
+    updater.applySettings()
     const rebuilt = launcherWindow.applyConfig()
     // A rebuilt window bootstraps itself on load, so only push to a live one.
     if (!rebuilt) launcherWindow.send('config:changed', bootstrap())
@@ -223,6 +255,8 @@ function wireEvents() {
   })
 
   appIndex.on('updated', (count: number) => launcherWindow.send('index:updated', count))
+
+  updater.on('status', (status) => notifySettings('settings:updateStatus', status))
 }
 
 /* ------------------------------------------------------------- lifecycle */
@@ -283,6 +317,7 @@ if (!app.requestSingleInstanceLock()) {
 
     await appIndex.init()
     applyStartupSetting()
+    updater.init()
 
     if (process.env.LUME_SCREENSHOT) {
       await captureAndExit(process.env.LUME_SCREENSHOT)

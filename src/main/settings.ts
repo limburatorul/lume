@@ -50,6 +50,7 @@ export const DEFAULT_CONFIG: Config = {
   launchOnStartup: false,
   hideOnStartup: true,
   showTrayIcon: true,
+  checkForUpdates: true,
 
   extraAppFolders: [],
   excludePatterns: ['uninstall', 'readme', 'help', 'license', 'documentation', 'website'],

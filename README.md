@@ -127,7 +127,8 @@ Save button, and everything is written straight to `config.json`.
 - **Behaviour** — hotkey, with a live badge saying whether Windows actually
   granted it; which monitor to open on; hide-on-blur; what happens to the last
   query; search delay; how strongly launch history outranks match quality.
-- **Startup** — start with Windows, start hidden, tray icon.
+- **Startup** — start with Windows, start hidden, tray icon, and automatic
+  update checks with the current status.
 - **Search** — extra folders to index, title exclusions, shell prefix and shell.
 - **Web search** — add, edit and remove engines; pick the fallback.
 - **Index & data** — index counts by kind, rebuild, forget launch history, clear
@@ -233,6 +234,7 @@ which is watched — edit it by hand and the running app picks the change up.
 | `launchOnStartup` | Register a Windows login item |
 | `hideOnStartup` | Start to the tray instead of showing the window |
 | `showTrayIcon` | Show the tray icon |
+| `checkForUpdates` | Ask GitHub for a newer release on a schedule |
 | `extraAppFolders` | Extra folders to index for `.lnk` / `.url` / `.exe` |
 | `excludePatterns` | Title substrings to drop from the index |
 | `searchEngines` | `{ keyword, name, url, glyph }`, `{q}` is the query |
@@ -243,6 +245,28 @@ which is watched — edit it by hand and the running app picks the change up.
 The file is UTF-8 without a BOM. Lume tolerates a BOM if your editor adds one,
 but PowerShell 5.1's `Get-Content`/`Out-File` will mangle non-ASCII values on a
 round trip unless you pass `-Encoding UTF8` — prefer the settings window.
+
+## Updates
+
+Lume asks GitHub for a newer release shortly after start and then every six
+hours, and you can force a check from **Settings → Startup → Updates** or the
+tray menu. Turn it off with **Check for updates automatically**; nothing
+contacts the network when it is off.
+
+What happens next depends on how you installed it, because only one of the two
+builds has something to hand over to:
+
+| Build | Behaviour |
+| --- | --- |
+| Installer | Downloads the new version in the background, verifies its SHA512 against `latest.yml`, and applies it the next time Lume restarts. **Restart now** in settings does it immediately. |
+| Portable | Tells you a newer version exists and links to its release page. A single executable has no installer to invoke, so replacing it stays your call. |
+
+Running from source behaves like the portable build: it reports what is
+available and leaves the rest to `git pull`.
+
+Publishing a release has to include `latest.yml` alongside the executables —
+that manifest is what the updater reads, and a release without it is invisible
+to every installed copy.
 
 ## Code signing
 
@@ -292,6 +316,7 @@ src/main/          Electron main process
   search/          fuzzy matcher and the provider aggregator
   icons.ts         lazy icon extraction with an on-disk cache
   store.ts         usage learning (frecency + query→result affinity)
+  updater.ts       update checks; installs on the NSIS build, notifies otherwise
   settingsWindow.ts  the settings window
 src/preload/       the narrow APIs exposed to each window
 src/renderer/      the launcher UI: index.html, base.css, main.ts
