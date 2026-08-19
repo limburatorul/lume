@@ -15,11 +15,19 @@ custom properties — save it and the running launcher restyles itself instantly
 
 ## Installing
 
-Run `Lume-<version>-x64.exe` from `release/` for a per-user install (no admin
-prompt, Start-menu and desktop shortcuts). `Lume-<version>-portable.exe` is a
-single self-extracting executable that needs no install.
+Download from [the latest release](https://github.com/limburatorul/lume/releases/latest).
+
+- `Lume-<version>-x64.exe` — per-user install, so no admin prompt. Adds
+  Start-menu and desktop shortcuts, and can start with Windows.
+- `Lume-<version>-portable.exe` — self-extracting, nothing installed. Settings
+  still live in `%APPDATA%\Lume`.
+
+Each release lists SHA256 checksums for both files.
 
 `Lume.exe --settings` opens the settings window directly.
+
+Windows 11 x64. The frosted-glass backdrop needs 22H2 or newer; on anything
+older set **Background material** to `None` and use the opacity slider.
 
 ### Windows will warn you the first time
 
