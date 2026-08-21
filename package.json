@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "package": "npm run build && electron-builder --win",
     "test": "node scripts/smoke.mjs",
-    "shot": "node scripts/screenshot.mjs",
+    "shot": "node scripts/shots.mjs",
     "package:dir": "npm run build && electron-builder --win --dir"
   },
   "devDependencies": {

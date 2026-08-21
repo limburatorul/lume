@@ -6,6 +6,11 @@
  * To keep the author's actual desktop out of the pictures, a full-screen
  * backdrop window is drawn first and the launcher is captured over that.
  *
+ * Note that this minimises your open windows while it runs, and restores them
+ * afterwards. Some applications insist on staying topmost and will otherwise
+ * sit between the backdrop and the launcher, which puts the real desktop in a
+ * screenshot. Every image is checked against the backdrop before it is kept.
+ *
  *   node scripts/shots.mjs
  *
  * Requires the app to be reachable on the debugging port so the exact window
@@ -136,6 +141,41 @@ async function windowRect(match, origin, pad = 100) {
   }
 }
 
+/**
+ * Confirms a finished image really is the launcher sitting on the generated
+ * backdrop. The backdrop exists so that the author's desktop never reaches a
+ * public README, and a silent failure produces exactly that with no warning —
+ * so the padding ring is checked for anything brighter than the backdrop can be.
+ */
+function assertOnBackdrop(file, pad) {
+  if (pad <= 4) return
+  const brightest = Number(
+    powershell(
+      'Add-Type -AssemblyName System.Drawing;' +
+        `$b=New-Object System.Drawing.Bitmap('${path.resolve(file)}');` +
+        '$max=0;' +
+        'foreach ($d in 2,8,16,24) {' +
+        '  foreach ($x in 2,[int]($b.Width/4),[int]($b.Width/2),[int]($b.Width*3/4),($b.Width-3)) {' +
+        '    foreach ($y in $d,($b.Height-$d-1)) {' +
+        '      $c=$b.GetPixel([int]$x,[int]$y);' +
+        '      $m=[Math]::Max($c.R,[Math]::Max($c.G,$c.B));' +
+        '      if ($m -gt $max) { $max=$m }' +
+        '    }' +
+        '  }' +
+        '}' +
+        '$b.Dispose(); $max',
+    ),
+  )
+  if (!Number.isFinite(brightest) || brightest > 110) {
+    throw new Error(
+      path.basename(file) +
+        ' was not captured on the backdrop (brightest edge pixel ' +
+        brightest +
+        '). Refusing to keep a screenshot that may show the real desktop.',
+    )
+  }
+}
+
 function crop(src, dest, rect) {
   powershell(
     'Add-Type -AssemblyName System.Drawing;' +
@@ -149,6 +189,19 @@ function crop(src, dest, rect) {
   )
 }
 
+/** Clears the desktop so nothing can wedge itself above the backdrop. */
+function minimizeEverything() {
+  powershell('(New-Object -ComObject Shell.Application).MinimizeAll()')
+}
+
+function restoreWindows() {
+  try {
+    powershell('(New-Object -ComObject Shell.Application).UndoMinimizeALL()')
+  } catch {
+    /* leaving windows minimised is not worth failing the run over */
+  }
+}
+
 function patchConfig(patch) {
   const cfg = JSON.parse(readFileSync(CONFIG, 'utf8').replace(/^\uFEFF/, ''))
   const merged = { ...cfg, ...patch, ui: { ...cfg.ui, ...(patch.ui ?? {}) } }
@@ -156,14 +209,20 @@ function patchConfig(patch) {
 }
 
 /**
- * Kills only the processes this script started. Killing every electron.exe
- * would take the backdrop window down with the launcher.
+ * Kills only the launcher processes this script started; killing every
+ * electron.exe would take the backdrop down with them.
+ *
+ * Exited processes are dropped from the set as they go. The second instance
+ * used to raise the window exits within a second, and taskkill /T against a
+ * PID Windows has already recycled will happily kill whatever inherited it —
+ * which is how the backdrop was dying midway through a run.
  */
 const spawned = new Set()
 
 function launch(args) {
   const child = spawn(ELECTRON, args, { detached: true, stdio: 'ignore' })
   spawned.add(child.pid)
+  child.on('exit', () => spawned.delete(child.pid))
   return child
 }
 
@@ -185,6 +244,9 @@ const tmp = path.join(os.tmpdir(), 'lume-shot-full.png')
 const origin = virtualOrigin()
 const original = readFileSync(CONFIG, 'utf8')
 
+minimizeEverything()
+await sleep(800)
+
 // A backdrop window under everything, so no real desktop is ever captured.
 // Electron has no -e flag, so the backdrop app is written out as a tiny script.
 const backdropDir = path.join(os.tmpdir(), 'lume-backdrop')
@@ -201,14 +263,39 @@ writeFileSync(
     'app.whenReady().then(() => {',
     '  const w = new BrowserWindow({ fullscreen: true, frame: false, skipTaskbar: true })',
     // Above other topmost popups, but below the launcher's screen-saver level.
-    "  w.setAlwaysOnTop(true, 'floating')",
+    // Re-asserted on a timer, because anything else that claims topmost would
+    // otherwise slide underneath the crop and expose the real desktop.
+    "  setInterval(() => { w.showInactive(); w.setAlwaysOnTop(true, 'floating') }, 500)",
     `  w.loadURL(${JSON.stringify(BACKDROP)})`,
     '})',
   ].join('\n'),
   'utf8',
 )
-const backdrop = spawn(ELECTRON, [backdropDir], { detached: true, stdio: 'ignore' })
-await sleep(4500)
+const BACKDROP_PORT = PORT + 1
+const backdrop = spawn(ELECTRON, [backdropDir, `--remote-debugging-port=${BACKDROP_PORT}`], {
+  detached: true,
+  stdio: 'ignore',
+})
+
+async function backdropAlive() {
+  try {
+    const targets = await (await fetch(`http://127.0.0.1:${BACKDROP_PORT}/json`)).json()
+    return targets.some((t) => t.type === 'page')
+  } catch {
+    return false
+  }
+}
+
+async function waitForBackdrop() {
+  for (let i = 0; i < 40; i++) {
+    await sleep(500)
+    if (await backdropAlive()) return
+  }
+  throw new Error('Backdrop never came up; refusing to photograph the real desktop.')
+}
+
+await waitForBackdrop()
+await sleep(1200)
 
 const SHOTS = [
   { file: 'launcher-default.png', config: { theme: 'default', ui: { surfaceOpacity: 0.78 } }, query: 'pych' },
@@ -226,6 +313,9 @@ const SHOTS = [
 for (const shot of SHOTS) {
   killLaunchers()
   await sleep(600)
+  if (!(await backdropAlive())) {
+    throw new Error('Backdrop disappeared mid-run; refusing to photograph the real desktop.')
+  }
   patchConfig({
     backdrop: 'acrylic',
     colorScheme: 'fixed',
@@ -251,7 +341,9 @@ for (const shot of SHOTS) {
 
   const rect = await windowRect('renderer', origin)
   grabScreen(tmp)
-  crop(tmp, path.join(OUT, shot.file), rect)
+  const dest = path.join(OUT, shot.file)
+  crop(tmp, dest, rect)
+  assertOnBackdrop(dest, 100)
   console.log('wrote', shot.file)
 }
 
@@ -275,4 +367,5 @@ try {
 writeFileSync(CONFIG, original, 'utf8')
 rmSync(tmp, { force: true })
 rmSync(backdropDir, { recursive: true, force: true })
-console.log('done — config restored')
+restoreWindows()
+console.log('done — config restored, windows unminimised')

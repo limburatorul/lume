@@ -334,10 +334,12 @@ const SECTIONS: Section[] = [
             kind: 'select',
             path: 'lastQueryMode',
             label: 'When reopening',
+            help:
+              'The two “keep” options differ only in where the cursor lands. Selected is usually what you want: the old query is still there to refine, but typing anything replaces it outright, so you never delete it by hand.',
             options: () => [
-              { value: 'empty', label: 'Start with an empty box' },
-              { value: 'preserve', label: 'Keep the last query' },
-              { value: 'select', label: 'Keep it, selected for overtyping' },
+              { value: 'empty', label: 'Start empty' },
+              { value: 'preserve', label: 'Keep the last query, cursor at the end' },
+              { value: 'select', label: 'Keep the last query, selected' },
             ],
           },
           {

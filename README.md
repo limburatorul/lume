@@ -218,7 +218,7 @@ which is watched — edit it by hand and the running app picks the change up.
 | `hotkey` | Electron accelerator, e.g. `Alt+Space`, `Ctrl+Shift+Space` |
 | `hideOnBlur` | Hide when focus is lost |
 | `showAtTopmost` | Stay above other windows, including full-screen apps |
-| `lastQueryMode` | `empty` \| `preserve` \| `select` |
+| `lastQueryMode` | `empty` clears the box; `preserve` keeps the query with the cursor at the end; `select` keeps it selected, so typing replaces it |
 | `searchDelay` | Milliseconds to wait after a keystroke; 0 searches on every key |
 | `colorScheme` | `fixed` uses `theme` always; `system` swaps with Windows |
 | `theme` / `themeLight` | Theme file names without `.css`; `themeLight` only matters under `system` |

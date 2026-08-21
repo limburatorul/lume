@@ -261,31 +261,6 @@ function wireEvents() {
 
 /* ------------------------------------------------------------- lifecycle */
 
-/** Feeds a query into the renderer, snapshots the window, then quits. */
-async function captureAndExit(target: string) {
-  launcherWindow.show()
-  const win = launcherWindow.win
-  if (!win) return app.exit(1)
-  const query = process.env.LUME_SCREENSHOT_QUERY ?? ''
-  // Let the background index finish before querying, or the shot is empty.
-  await new Promise((r) => setTimeout(r, Number(process.env.LUME_SCREENSHOT_DELAY ?? 4000)))
-  await win.webContents.executeJavaScript(
-    'const i=document.getElementById("input");i.value=' +
-      JSON.stringify(query) +
-      ';i.dispatchEvent(new Event("input"));',
-  )
-  // Optional extra step, e.g. opening the actions menu before the shot.
-  if (process.env.LUME_SCREENSHOT_JS) {
-    await new Promise((r) => setTimeout(r, 400))
-    await win.webContents.executeJavaScript(process.env.LUME_SCREENSHOT_JS)
-  }
-  await new Promise((r) => setTimeout(r, 900))
-  const image = await win.webContents.capturePage()
-  await (await import('node:fs/promises')).writeFile(target, image.toPNG())
-  console.log('[screenshot] wrote ' + target)
-  app.exit(0)
-}
-
 if (!app.requestSingleInstanceLock()) {
   app.exit(0)
 } else {
@@ -318,11 +293,6 @@ if (!app.requestSingleInstanceLock()) {
     await appIndex.init()
     applyStartupSetting()
     updater.init()
-
-    if (process.env.LUME_SCREENSHOT) {
-      await captureAndExit(process.env.LUME_SCREENSHOT)
-      return
-    }
 
     if (process.argv.includes('--settings')) {
       openSettings()
