@@ -15,7 +15,7 @@ npm start           # build, then launch Electron
 npm run typecheck   # tsc --noEmit — the only type gate, run it before committing
 npm test            # scripts/smoke.mjs — bundles smoke-entry.ts and runs it
 npm run package     # electron-builder --win → release/ (nsis + portable)
-npm run shot        # regenerate README screenshots
+npm run shot        # regenerate README screenshots - rarely; see below
 ```
 
 There is no linter and no formatter config. Match the surrounding style by hand.
@@ -82,6 +82,10 @@ in `wireEvents()`.
   there or it will be missing from `dist/` and from the package.
 - `uwp.ps1` is listed under `asarUnpack` — it is spawned as a real file, so it
   cannot live inside the asar archive.
+- The committed screenshots are settled. Do not regenerate them as part of other
+  work - only on request, or when the UI has changed enough that they
+  misrepresent the app. A run drives the real desktop: it minimises open windows
+  and screen-grabs them, which is not a cost worth paying for a cosmetic refresh.
 - README screenshots are real screen grabs, because the acrylic backdrop only
   exists in the composited desktop and `capturePage()` cannot see it.
   `scripts/shots.mjs` paints a full-screen backdrop, reads window bounds back over
