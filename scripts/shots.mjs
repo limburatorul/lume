@@ -297,6 +297,7 @@ async function waitForBackdrop() {
 await waitForBackdrop()
 await sleep(1200)
 
+let failure = null
 const SHOTS = [
   { file: 'launcher-default.png', config: { theme: 'default', ui: { surfaceOpacity: 0.78 } }, query: 'pych' },
   { file: 'launcher-carbon.png', config: { theme: 'carbon', ui: { surfaceOpacity: 1 } }, query: 'notep' },
@@ -310,6 +311,7 @@ const SHOTS = [
   },
 ]
 
+try {
 for (const shot of SHOTS) {
   killLaunchers()
   await sleep(600)
@@ -357,6 +359,11 @@ launch(['.', '--settings', `--remote-debugging-port=${PORT}`])
 await sleep(8000)
 writeFileSync(path.join(OUT, 'settings.png'), Buffer.from(await capturePage('settings'), 'base64'))
 console.log('wrote settings.png')
+} catch (err) {
+  // Recorded rather than thrown, so the cleanup below always runs: an aborted
+  // run must not leave the user's config patched with the shot settings.
+  failure = err
+}
 
 killLaunchers()
 try {
@@ -368,4 +375,9 @@ writeFileSync(CONFIG, original, 'utf8')
 rmSync(tmp, { force: true })
 rmSync(backdropDir, { recursive: true, force: true })
 restoreWindows()
+
+if (failure) {
+  console.error(failure.message)
+  process.exit(1)
+}
 console.log('done — config restored, windows unminimised')
