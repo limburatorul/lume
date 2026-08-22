@@ -172,7 +172,7 @@ function registerIpc() {
     const action = altIndex === null ? item.action : item.altActions?.[altIndex]?.action
     if (!action) return false
     // Only learn from the primary action; alternates are deliberate one-offs.
-    if (altIndex === null && settings.get().frecencyWeight > 0 && item.provider === 'apps') {
+    if (altIndex === null && settings.get().frecencyWeight > 0 && (item.provider === 'apps' || item.provider === 'system')) {
       usage.record(item.id, lastQuery)
     }
     await execute(action, ctx)
@@ -280,7 +280,7 @@ if (!app.requestSingleInstanceLock()) {
 
     settings.init()
     themes.init()
-    usage.init()
+    usage.init(app.getPath('userData'))
     initIcons()
 
     registerIpc()

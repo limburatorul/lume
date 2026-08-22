@@ -78,9 +78,22 @@ npm run package
 
 **Applications** — indexes Start Menu shortcuts, Desktop shortcuts, and Store/UWP
 apps (icons and all). Fuzzy matching handles prefixes (`pych` → PyCharm), acronyms
-(`vsc` → Visual Studio Code) and typo-free subsequences. Ranking blends the match
-quality with what you actually launch, so the second time you type `ard` the right
-Arduino is already first.
+(`vsc` → Visual Studio Code) and typo-free subsequences.
+
+Ranking then learns, in three steps:
+
+- **What a query has been used to launch wins outright.** Pick the third result
+  once and it is first for that query from then on. This overrides the match
+  score rather than nudging it — choosing a result is you saying what those
+  characters mean, and it should not have to be repeated. A different choice
+  later takes over in the same way.
+- **An app you have launched outranks one you never have**, when the matches are
+  comparable. Bounded, so typing the exact name of something freshly installed
+  still finds it.
+- **Otherwise, match quality blended with how much you use the app**, which is
+  what keeps a daily driver on top when something similarly named appears.
+
+Set `frecencyWeight` to 0 to switch all of it off and rank purely on the match.
 
 **Calculator** — type an expression: `sqrt(144) * 2`, `2^10`, `17 % 5`, `12k / 4`,
 `0xff`. Enter copies the result. Parsing is a hand-written tokenizer and shunting-yard

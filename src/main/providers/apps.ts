@@ -2,6 +2,7 @@ import path from 'node:path'
 import type { AltAction, ResultItem } from '../../shared/types.js'
 import { appIndex, type AppEntry } from '../indexer/apps.js'
 import { scoreCandidate } from '../search/fuzzy.js'
+import { rankScore } from '../search/rank.js'
 import { settings } from '../settings.js'
 import { usage } from '../store.js'
 
@@ -38,9 +39,7 @@ export function appsProvider(query: string): ResultItem[] {
     const match = scoreCandidate(q, entry.name, entry.keywords)
     if (!match || match.normalized < MIN_SCORE) continue
 
-    // Learned signal: general usage plus "this exact query led here before".
-    const learned = Math.max(usage.frecency(entry.id), usage.queryAffinity(q, entry.id) * 1.1)
-    const score = match.normalized * (1 - cfg.frecencyWeight) + learned * cfg.frecencyWeight
+    const score = rankScore(q, match.normalized, entry.id, cfg.frecencyWeight)
 
     out.push({
       id: entry.id,

@@ -5,6 +5,7 @@ import { shellProvider } from '../providers/shell.js'
 import { systemProvider } from '../providers/system.js'
 import { websearchProvider } from '../providers/websearch.js'
 import { settings } from '../settings.js'
+import { isPinned, PINNED_SCORE } from './rank.js'
 
 /**
  * Runs every provider and merges their results. Providers are synchronous and
@@ -28,6 +29,13 @@ export function search(rawQuery: string): ResultItem[] {
     ...systemProvider(query),
     ...websearchProvider(query),
   ]
+
+  // Applied here rather than in a provider so a learned system command gets the
+  // same treatment as a learned app. See rank.ts for why this overrides rather
+  // than nudges.
+  for (const item of items) {
+    if (isPinned(query, item.id, cfg.frecencyWeight)) item.score = PINNED_SCORE
+  }
 
   items.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score

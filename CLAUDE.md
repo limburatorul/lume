@@ -44,11 +44,18 @@ add it to the array in `engine.ts` — there is no registry.
 Two queries bypass the merge entirely: an empty query returns `frequentApps()`,
 and a query starting with `config.shellPrefix` goes only to the shell provider.
 
-Ranking combines a fuzzy match score (`search/fuzzy.ts`) with a learned signal
-from `store.ts`, blended by `config.frecencyWeight`. `store.ts` keeps two things:
-per-item frecency with a 30-day half-life, and query→item affinity, which is what
-makes a typed prefix land on the app you picked last time. Only the *primary*
-action of an `apps` result is recorded; alternates are treated as deliberate one-offs.
+Ranking lives in `search/rank.ts`: a fuzzy match score (`search/fuzzy.ts`)
+blended with learned usage from `store.ts` by `config.frecencyWeight`, plus two
+rules that deliberately are not part of that blend — a bonus for anything ever
+launched, and an outright override for whatever a query has been used to launch
+(`isPinned`, applied in `engine.ts` so system commands get it too).
+
+`store.ts` keeps per-item frecency with a 30-day half-life, query→item affinity
+for the ramp while a prefix is being typed, and `topForQuery`, which is the
+override. It takes its directory through `init(dir)` rather than importing
+Electron, so `rank.ts` and the store can be exercised by `npm test`. Only the
+*primary* action of an `apps` or `system` result is recorded; alternates are
+treated as deliberate one-offs.
 
 ### Module shape
 

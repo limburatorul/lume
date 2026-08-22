@@ -1,4 +1,3 @@
-import { app } from 'electron'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -23,8 +22,9 @@ class UsageStore {
   private dirty = false
   private timer: NodeJS.Timeout | null = null
 
-  init() {
-    this.file = path.join(app.getPath('userData'), 'usage.json')
+  /** `dir` is the user-data directory; passed in so this module stays testable. */
+  init(dir: string) {
+    this.file = path.join(dir, 'usage.json')
     try {
       if (fs.existsSync(this.file)) {
         this.data = JSON.parse(fs.readFileSync(this.file, 'utf8').replace(/^\uFEFF/, ''))
@@ -49,6 +49,11 @@ class UsageStore {
       this.trimQueries()
     }
     this.scheduleSave()
+  }
+
+  /** How many times this item has been launched from the launcher. */
+  timesLaunched(itemId: string): number {
+    return this.data.items[itemId]?.count ?? 0
   }
 
   /**
@@ -86,6 +91,37 @@ class UsageStore {
       }
     }
     return best
+  }
+
+  /**
+   * The item this exact query has led to most often, or null.
+   *
+   * This is a deliberate override rather than another weighted signal. Picking
+   * a result is the user stating what they meant by those characters, and a
+   * blended score cannot honour that reliably: a third-placed result with a
+   * weak fuzzy match stays third no matter how the weights are tuned. Ranking
+   * treats this as settled and puts the item first.
+   */
+  topForQuery(query: string): string | null {
+    const q = query.trim().toLowerCase()
+    if (!q) return null
+    const bucket = this.data.queries[q]
+    if (!bucket) return null
+    let bestId: string | null = null
+    let bestCount = 0
+    for (const [id, count] of Object.entries(bucket)) {
+      // Ties go to whichever was launched more recently, so changing your mind
+      // about a query takes effect rather than sticking on the first choice.
+      if (count > bestCount || (count === bestCount && bestId && this.lastUsed(id) > this.lastUsed(bestId))) {
+        bestId = id
+        bestCount = count
+      }
+    }
+    return bestId
+  }
+
+  private lastUsed(itemId: string): number {
+    return this.data.items[itemId]?.last ?? 0
   }
 
   private trimQueries() {
