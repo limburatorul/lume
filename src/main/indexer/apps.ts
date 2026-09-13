@@ -217,9 +217,11 @@ class AppIndex extends EventEmitter {
         })
       } else if (ext === '.url') {
         let url = ''
+        let iconFile = ''
         try {
           const body = fs.readFileSync(file, 'utf8')
           url = /^URL=(.*)$/m.exec(body)?.[1]?.trim() ?? ''
+          iconFile = /^IconFile=(.*)$/m.exec(body)?.[1]?.trim() ?? ''
         } catch {
           continue
         }
@@ -230,6 +232,9 @@ class AppIndex extends EventEmitter {
           keywords: keywordsFor(name),
           kind: 'url',
           launch: url,
+          // Most .url shortcuts name their own icon; without it there is
+          // nothing local to draw from, so the row keeps its 🔗 glyph.
+          iconPath: iconFile && fs.existsSync(iconFile) ? iconFile : undefined,
           subtitle: url,
         })
       } else {
