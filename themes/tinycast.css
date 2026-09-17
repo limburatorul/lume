@@ -1,0 +1,91 @@
+/*
+ * Lume - tinycast
+ *
+ * Ported from the literal design tokens in Tinycast (github.com/abue-ammar/
+ * tinycast), a macOS launcher - not eyeballed from a screenshot. Values below
+ * are traced to Tinycast/DesignSystem/Theme.swift and KeyCapChip.swift:
+ *
+ *   panelScrim        black ink, alpha 0.40, over the system blur   -> --surface-*
+ *   Radius.panel  26  Radius.row  10  Radius.keyCap  6
+ *   Size.rowIcon  24  Size.keyCap 18  headerHeight+padding*2  64
+ *   Typography.searchFieldSize  20   .headerIcon  18pt
+ *   Colors.textPrimary    white, alpha 1.0
+ *   Colors.textSecondary  white, alpha 0.6   (row hint / trailing text)
+ *   Colors.textTertiary   white, alpha 0.4   (placeholder, dim labels)
+ *   Colors.selection      white, alpha 0.10  Colors.rowHover  0.05
+ *   Colors.separator      white, alpha 0.10
+ *   Colors.controlSurface white, alpha 0.10  Colors.border    0.20
+ *   Colors.primaryAction  system blue (#0A84FF in dark mode)
+ *
+ * Tinycast's own row hint is a KeyCapChip in ".outline" style: a border with
+ * no fill, which is why --hint-bg below is transparent and the border is
+ * added by hand - base.css has no border property on .row-hint to override.
+ * Pair with "backdrop": "acrylic" - the source paints this over a real blur,
+ * not a flat colour.
+ */
+
+:root {
+  --surface-rgb: 0 0 0;
+  --surface-opacity: 0.55;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-width: 1px;
+  --radius: 26px;
+  --shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
+  --padding: 10px;
+
+  --font: -apple-system, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --text: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.4);
+  --accent: #0a84ff;
+  --divider: rgba(255, 255, 255, 0.1);
+
+  /* Query box: 64 = Theme.Size.compactHeight (headerHeight 44 + padding 10 * 2) */
+  --input-height: 64px;
+  --input-size: 20px;
+  --input-weight: 400;
+  --input-padding: 22px;
+  --input-placeholder: rgba(255, 255, 255, 0.4);
+  --search-glyph: "\1F50D";
+  --search-glyph-size: 18px;
+  --search-glyph-color: rgba(255, 255, 255, 0.4);
+
+  /* Rows: flat highlight, no accent bar - Tinycast marks selection with fill
+     alone, never a coloured edge. */
+  --row-gap: 2px;
+  --row-radius: 10px;
+  --row-padding: 14px;
+  --row-bg-hover: rgba(255, 255, 255, 0.05);
+  --row-bg-selected: rgba(255, 255, 255, 0.1);
+  --row-accent-width: 0px;
+
+  --title-size: 14px;
+  --title-weight: 500;
+  --title-color: #ffffff;
+  --title-color-dim: rgba(255, 255, 255, 0.6);
+  --subtitle-size: 12px;
+  --subtitle-color: rgba(255, 255, 255, 0.6);
+  --match-color: #ffffff;
+  --match-weight: 700;
+
+  --icon-size: 24px;
+  --icon-radius: 6px;
+  --glyph-size: 14px;
+
+  /* An outline keycap: border only, no fill - see --hint-bg and the rule below. */
+  --hint-size: 11px;
+  --hint-color: rgba(255, 255, 255, 0.6);
+  --hint-bg: transparent;
+  --hint-radius: 6px;
+
+  --anim-duration: 100ms;
+}
+
+.row-hint {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.context-item .hint {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 2px 6px;
+}

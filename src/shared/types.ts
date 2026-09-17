@@ -58,6 +58,13 @@ export interface SearchEngine {
   glyph?: string
 }
 
+/** A named shell command, fuzzy-searchable like a system command. */
+export interface CustomCommand {
+  keyword: string
+  name: string
+  command: string
+}
+
 /**
  * Per-setting overrides of theme values. `null` means "leave whatever the
  * theme chose"; a number or string wins over the theme's own declaration.
@@ -123,6 +130,7 @@ export interface Config {
   defaultEngine: string
   shellPrefix: string
   shell: 'powershell' | 'cmd'
+  customCommands: CustomCommand[]
   frecencyWeight: number
 }
 

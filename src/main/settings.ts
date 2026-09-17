@@ -68,6 +68,7 @@ export const DEFAULT_CONFIG: Config = {
   defaultEngine: 'g',
   shellPrefix: '>',
   shell: 'powershell',
+  customCommands: [],
   frecencyWeight: 0.35,
 }
 

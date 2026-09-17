@@ -1,5 +1,6 @@
 import type { Action, ResultItem } from '../../shared/types.js'
 import { scoreCandidate } from '../search/fuzzy.js'
+import { settings } from '../settings.js'
 
 interface Command {
   id: string
@@ -112,6 +113,37 @@ const COMMANDS: Command[] = [
 
 const MIN_SCORE = 0.35
 
+/** User-defined shell commands from Settings → Search, matched like the built-ins above. */
+function customCommandResults(q: string): ResultItem[] {
+  const out: ResultItem[] = []
+  for (const cmd of settings.get().customCommands) {
+    const title = cmd.name.trim() || cmd.keyword.trim()
+    if (!title || !cmd.command.trim()) continue
+    const match = scoreCandidate(q, title, cmd.keyword ? [cmd.keyword] : [])
+    if (!match || match.normalized < MIN_SCORE) continue
+    out.push({
+      id: 'cmd:' + cmd.keyword.trim().toLowerCase(),
+      title,
+      subtitle: cmd.command,
+      glyph: '>_',
+      score: match.normalized * 0.9,
+      provider: 'system',
+      matches: match.positions,
+      action: { kind: 'shellExec', command: cmd.command },
+      altActions: [
+        { label: 'Run hidden (no window)', action: { kind: 'shellExec', command: cmd.command, hidden: true } },
+        {
+          label: 'Run as administrator',
+          action: { kind: 'shellExec', command: cmd.command, admin: true },
+          hint: 'Ctrl+Enter',
+        },
+        { label: 'Copy command', action: { kind: 'copy', text: cmd.command } },
+      ],
+    })
+  }
+  return out
+}
+
 export function systemProvider(query: string): ResultItem[] {
   const q = query.trim()
   if (q.length < 2) return []
@@ -132,5 +164,6 @@ export function systemProvider(query: string): ResultItem[] {
       action: cmd.action,
     })
   }
+  out.push(...customCommandResults(q))
   return out
 }

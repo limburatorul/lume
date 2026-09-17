@@ -1,4 +1,4 @@
-import type { Config, IndexStats, SearchEngine, ThemeInfo, UpdateStatus } from '../shared/types.js'
+import type { Config, CustomCommand, IndexStats, SearchEngine, ThemeInfo, UpdateStatus } from '../shared/types.js'
 import type { LumeSettingsApi } from '../preload/settings.js'
 
 declare global {
@@ -83,6 +83,7 @@ type Field =
   | { kind: 'hotkey'; path: string; label: string; help?: string }
   | { kind: 'list'; path: string; label: string; help?: string; placeholder: string; folderPicker?: boolean }
   | { kind: 'engines'; label: string; help?: string }
+  | { kind: 'commands'; label: string; help?: string }
   | { kind: 'custom'; render: () => HTMLElement }
 
 interface Group {
@@ -426,7 +427,7 @@ const SECTIONS: Section[] = [
     id: 'search',
     label: 'Search',
     title: 'Search sources',
-    blurb: 'What gets indexed, what gets filtered out, and how the shell prefix behaves.',
+    blurb: 'What gets indexed, what gets filtered out, how the shell prefix behaves, and named commands of your own.',
     groups: () => [
       {
         title: 'Application index',
@@ -469,6 +470,10 @@ const SECTIONS: Section[] = [
             ],
           },
         ],
+      },
+      {
+        title: 'Custom commands',
+        fields: [{ kind: 'commands', label: 'Commands' }],
       },
     ],
   },
@@ -791,6 +796,64 @@ function buildEngines(f: Extract<Field, { kind: 'engines' }>) {
   return fieldShell(f.label, 'URLs must contain <code>{q}</code>, which is replaced by the query.', wrap, true)
 }
 
+function buildCommands(f: Extract<Field, { kind: 'commands' }>) {
+  const commands: CustomCommand[] = config.customCommands.map((c) => ({ ...c }))
+  const wrap = el('div', { class: 'list' })
+
+  const commit = () => write('customCommands', commands.filter((c) => c.keyword.trim() && c.command.trim()))
+
+  const table = el('table', { class: 'engines' })
+  const head = el('tr')
+  head.append(
+    el('th', { class: 'col-key', textContent: 'Keyword' }),
+    el('th', { class: 'col-name', textContent: 'Name' }),
+    el('th', { textContent: 'Command' }),
+    el('th', { textContent: '' }),
+  )
+  table.append(head)
+
+  commands.forEach((cmd, i) => {
+    const row = el('tr')
+    const mk = (key: 'keyword' | 'name' | 'command', placeholder: string, mono = false) => {
+      const input = el('input', { type: 'text', value: cmd[key] ?? '', placeholder })
+      if (mono) input.style.fontFamily = 'var(--mono)'
+      input.addEventListener('change', () => {
+        commands[i][key] = input.value.trim()
+        commit()
+      })
+      return input
+    }
+    const remove = el('button', { class: 'icon-btn', title: 'Remove', textContent: '×' })
+    remove.addEventListener('click', () => {
+      commands.splice(i, 1)
+      commit()
+    })
+    row.append(
+      el('td', {}, mk('keyword', 'pull')),
+      el('td', {}, mk('name', 'Pull latest')),
+      el('td', {}, mk('command', 'git pull', true)),
+      el('td', {}, remove),
+    )
+    table.append(row)
+  })
+
+  const add = el('button', { class: 'ghost', textContent: '+ Add command' })
+  add.addEventListener('click', () => {
+    commands.push({ keyword: '', name: '', command: '' })
+    renderSection(() => {
+      config.customCommands = commands
+    })
+  })
+
+  wrap.append(table, el('div', { class: 'list-row' }, add))
+  return fieldShell(
+    f.label,
+    'Matched by keyword or name, same as an app. Runs in ' + config.shell + ', like the shell prefix above.',
+    wrap,
+    true,
+  )
+}
+
 /* ------------------------------------------------------- bespoke panels */
 
 function renderIndexPanel(): HTMLElement {
@@ -977,6 +1040,8 @@ function buildField(f: Field): HTMLElement {
       return buildList(f)
     case 'engines':
       return buildEngines(f)
+    case 'commands':
+      return buildCommands(f)
     case 'custom':
       return f.render()
   }
