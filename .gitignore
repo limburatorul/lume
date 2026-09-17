@@ -7,3 +7,9 @@ release/
 .devtest/
 .exp/
 relnotes-012.md
+
+# The presentation page: edited alongside the app but not part of its history.
+/site/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
