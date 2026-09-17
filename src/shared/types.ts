@@ -72,6 +72,8 @@ export interface UiOverrides {
   resultFontSize: number | null
   resultSubFontSize: number | null
   fontFamily: string | null
+  /** Replace the theme's --accent with the Windows system accent colour. */
+  useWindowsAccent: boolean
 }
 
 export type Backdrop = 'acrylic' | 'mica' | 'tabbed' | 'none'
@@ -135,6 +137,8 @@ export interface Bootstrap {
   css: string
   /** Name of the theme actually in effect once colorScheme is resolved. */
   activeTheme: string
+  /** Windows system accent colour as `#rrggbb`, when ui.useWindowsAccent is on. */
+  accentColor: string | null
   version: string
   /** Entries indexed so far; 0 means the first scan has not finished. */
   indexCount: number

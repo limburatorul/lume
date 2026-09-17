@@ -388,7 +388,7 @@ document.addEventListener('keydown', (e) => {
  * Settings that override the theme are emitted as a second stylesheet after
  * the theme's, so a blank override simply leaves the theme's value standing.
  */
-function overrideCss(cfg: Bootstrap['config']): string {
+function overrideCss(cfg: Bootstrap['config'], accentColor: string | null): string {
   const rules: string[] = []
   const push = (prop: string, value: string | number | null, unit = '') => {
     if (value === null || value === '') return
@@ -396,6 +396,7 @@ function overrideCss(cfg: Bootstrap['config']): string {
   }
   const ui = cfg.ui
   push('--surface-opacity', ui.surfaceOpacity)
+  if (ui.useWindowsAccent) push('--accent', accentColor)
   push('--radius', ui.cornerRadius, 'px')
   push('--row-height', ui.rowHeight, 'px')
   push('--icon-size', ui.iconSize, 'px')
@@ -411,7 +412,7 @@ function applyBootstrap(b: Bootstrap) {
   config = b.config
   indexCount = b.indexCount
   el.theme.textContent = b.css
-  el.overrides.textContent = overrideCss(b.config)
+  el.overrides.textContent = overrideCss(b.config, b.accentColor)
   document.documentElement.dataset.backdrop = b.config.backdrop
   document.documentElement.dataset.animate = String(b.config.useAnimation)
   el.input.placeholder = b.config.showPlaceholder ? b.config.placeholder : ''

@@ -235,6 +235,7 @@ html[data-animate="false"] .lume {
   width: var(--row-accent-width);
   background: var(--row-accent-color);
   border-radius: 0 2px 2px 0;
+  transition: background var(--anim-duration) var(--anim-ease);
 }
 
 .row-icon {
@@ -309,6 +310,7 @@ html[data-animate="false"] .lume {
   padding: 2px 6px;
   font-family: var(--font-mono);
   opacity: 0;
+  transition: opacity var(--anim-duration) var(--anim-ease);
 }
 
 .row.selected .row-hint,
@@ -344,6 +346,7 @@ html[data-animate="false"] .lume {
   border-radius: var(--row-radius);
   font-size: var(--title-size);
   color: var(--title-color);
+  transition: background var(--anim-duration) var(--anim-ease);
 }
 
 .context-item.selected {

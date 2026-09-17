@@ -57,4 +57,5 @@
 
 .row.selected {
   box-shadow: inset 0 0 0 1px #303338;
+  transition: box-shadow var(--anim-duration) var(--anim-ease);
 }

@@ -45,6 +45,7 @@ export const DEFAULT_CONFIG: Config = {
     resultFontSize: null,
     resultSubFontSize: null,
     fontFamily: null,
+    useWindowsAccent: false,
   },
 
   launchOnStartup: false,

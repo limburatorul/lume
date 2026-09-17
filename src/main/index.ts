@@ -8,6 +8,7 @@ import {
   nativeTheme,
   Notification,
   shell,
+  systemPreferences,
   Tray,
 } from 'electron'
 import path from 'node:path'
@@ -132,6 +133,16 @@ async function checkUpdatesFromTray() {
   }
 }
 
+/** getAccentColor() returns RRGGBBAA; the CSS custom property only wants the colour. */
+function accentColor(): string | null {
+  if (!settings.get().ui.useWindowsAccent) return null
+  try {
+    return '#' + systemPreferences.getAccentColor().slice(0, 6)
+  } catch {
+    return null
+  }
+}
+
 function bootstrap(): Bootstrap {
   const active = activeThemeName()
   return {
@@ -139,6 +150,7 @@ function bootstrap(): Bootstrap {
     themes: themes.list(),
     css: themes.css(active),
     activeTheme: active,
+    accentColor: accentColor(),
     version: app.getVersion(),
     indexCount: appIndex.stats().total,
   }
@@ -255,6 +267,10 @@ function wireEvents() {
   })
 
   appIndex.on('updated', (count: number) => launcherWindow.send('index:updated', count))
+
+  systemPreferences.on('accent-color-changed', () => {
+    if (settings.get().ui.useWindowsAccent) launcherWindow.send('config:changed', bootstrap())
+  })
 
   updater.on('status', (status) => notifySettings('settings:updateStatus', status))
 }

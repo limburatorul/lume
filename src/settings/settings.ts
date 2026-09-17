@@ -149,6 +149,12 @@ const SECTIONS: Section[] = [
                   options: themeOptions,
                 },
               ] as Field[])),
+          {
+            kind: 'toggle',
+            path: 'ui.useWindowsAccent',
+            label: 'Match Windows accent colour',
+            help: 'Overrides the theme’s accent with your Windows personalization colour, and follows it live if you change it.',
+          },
         ],
       },
       {
