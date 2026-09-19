@@ -1,5 +1,7 @@
 # Lume
 
+**Download and details:** [protagonistlabs.app/lume](https://protagonistlabs.app/lume/)
+
 A keyboard launcher for Windows, built to be themed in plain CSS.
 
 Press `Alt+Space`, type a few letters, hit Enter. It learns which app you meant.
