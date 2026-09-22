@@ -193,11 +193,13 @@ class AppIndex extends EventEmitter {
         let target = ''
         let args = ''
         let description: string | undefined
+        let icon = ''
         try {
           const link = shell.readShortcutLink(file)
           target = link.target ?? ''
           args = link.args ?? ''
           description = link.description
+          icon = link.icon ?? ''
         } catch {
           /* broken shortcut - still launchable through the shell */
         }
@@ -212,7 +214,9 @@ class AppIndex extends EventEmitter {
           kind: 'lnk',
           launch: file,
           exePath: target || undefined,
-          iconPath: target ? target + '|' + file : file,
+          // A shortcut's own .ico beats its target: Chrome web apps, script
+          // launchers and GOG games all point at a host exe with someone else's icon.
+          iconPath: [/\.ico$/i.test(icon) && fs.existsSync(icon) ? icon : '', target, file].filter(Boolean).join('|'),
           subtitle: description?.trim() || target || file,
         })
       } else if (ext === '.url') {
