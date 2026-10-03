@@ -341,3 +341,9 @@ themes/            theme stylesheets
 
 State lives in `%APPDATA%\Lume\`: `config.json`, `usage.json`, `appindex.json`,
 `iconcache/`.
+
+## More from Protagonist Labs
+
+- [HotkeyScan](https://protagonistlabs.app/hotkeyscan/?utm_source=github&utm_medium=readme&utm_campaign=lume): finds which program holds a shortcut, free.
+- [File Labs](https://protagonistlabs.app/filelabs/?utm_source=github&utm_medium=readme&utm_campaign=lume): a free dual-pane file manager.
+- [All apps](https://protagonistlabs.app/?utm_source=github&utm_medium=readme&utm_campaign=lume): Windows apps that each do one job properly.
