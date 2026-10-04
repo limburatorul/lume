@@ -100,11 +100,26 @@ function buildTray() {
 
   const image = nativeImage.createFromPath(TRAY_ICON)
   tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image)
+  setTrayMenu()
+  tray.on('click', () => launcherWindow.toggle())
+  updateTray()
+}
+
+/** Rebuilt rather than built once, because a waiting update adds an entry. */
+function setTrayMenu() {
+  if (!tray) return
+  const pending = updater.current.state === 'ready' ? updater.current.version : ''
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: 'Show Lume', click: () => launcherWindow.show() },
       { label: 'Settings…', click: () => openSettings() },
       { type: 'separator' },
+      ...(pending
+        ? [
+            { label: 'Restart and install ' + pending, click: () => updater.install() },
+            { type: 'separator' as const },
+          ]
+        : []),
       { label: 'Check for updates…', click: () => void checkUpdatesFromTray() },
       { type: 'separator' },
       { label: 'Send feedback (feedback@protagonistlabs.app)', click: () => void shell.openExternal('mailto:feedback@protagonistlabs.app?subject=Lume%20feedback') },
@@ -118,8 +133,26 @@ function buildTray() {
       { label: 'Quit Lume', click: () => app.quit() },
     ]),
   )
-  tray.on('click', () => launcherWindow.toggle())
-  updateTray()
+}
+
+/**
+ * A downloaded update used to wait in silence for a clean quit, which a tray
+ * app can go months without: the download sat there while the launcher went
+ * on being an old version. One nudge per version, and the tray keeps the
+ * offer around for anyone who misses it.
+ */
+let offeredUpdate = ''
+function offerUpdate(version: string | undefined) {
+  if (!version || offeredUpdate === version) return
+  offeredUpdate = version
+  setTrayMenu()
+  if (!Notification.isSupported()) return
+  const note = new Notification({
+    title: 'Lume ' + version + ' is ready',
+    body: 'Click to restart and install it. Otherwise it installs the next time Lume quits.',
+  })
+  note.on('click', () => updater.install())
+  note.show()
 }
 
 /** Checks on demand and reports the outcome, since the tray has no UI of its own. */
@@ -284,7 +317,10 @@ function wireEvents() {
     if (settings.get().ui.useWindowsAccent) launcherWindow.send('config:changed', bootstrap())
   })
 
-  updater.on('status', (status) => notifySettings('settings:updateStatus', status))
+  updater.on('status', (status) => {
+    notifySettings('settings:updateStatus', status)
+    if (status.state === 'ready') offerUpdate(status.version)
+  })
 }
 
 /* ------------------------------------------------------------- lifecycle */
