@@ -298,7 +298,7 @@ export function calculatorProvider(query: string): ResultItem[] {
       id: 'calc:' + expr,
       title: text,
       subtitle: expr + '  —  Enter to copy',
-      glyph: '=',
+      glyph: 'calc',
       // Calculations are almost always what you want when they parse.
       score: 1.15,
       provider: 'calculator',

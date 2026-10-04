@@ -30,7 +30,7 @@
   --input-weight: 400;
   --input-padding: 18px;
   --input-placeholder: rgba(255, 255, 255, 0.28);
-  --search-glyph: "\1F50D";
+  --search-glyph: "";
   --search-glyph-size: 15px;
   --search-glyph-color: rgba(255, 255, 255, 0.3);
 

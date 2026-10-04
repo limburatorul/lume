@@ -56,14 +56,14 @@ export const DEFAULT_CONFIG: Config = {
   extraAppFolders: [],
   excludePatterns: ['uninstall', 'readme', 'help', 'license', 'documentation', 'website'],
   searchEngines: [
-    { keyword: 'g', name: 'Google', url: 'https://www.google.com/search?q={q}', glyph: '🔎' },
-    { keyword: 'yt', name: 'YouTube', url: 'https://www.youtube.com/results?search_query={q}', glyph: '▶' },
-    { keyword: 'gh', name: 'GitHub', url: 'https://github.com/search?q={q}', glyph: '🐙' },
-    { keyword: 'so', name: 'Stack Overflow', url: 'https://stackoverflow.com/search?q={q}', glyph: '💬' },
-    { keyword: 'wiki', name: 'Wikipedia', url: 'https://en.wikipedia.org/w/index.php?search={q}', glyph: '📖' },
-    { keyword: 'npm', name: 'npm', url: 'https://www.npmjs.com/search?q={q}', glyph: '📦' },
-    { keyword: 'mdn', name: 'MDN', url: 'https://developer.mozilla.org/en-US/search?q={q}', glyph: '📘' },
-    { keyword: 'dex', name: 'DEX', url: 'https://dexonline.ro/definitie/{q}', glyph: '🇷🇴' },
+    { keyword: 'g', name: 'Google', url: 'https://www.google.com/search?q={q}', glyph: 'search' },
+    { keyword: 'yt', name: 'YouTube', url: 'https://www.youtube.com/results?search_query={q}', glyph: 'play' },
+    { keyword: 'gh', name: 'GitHub', url: 'https://github.com/search?q={q}', glyph: 'code' },
+    { keyword: 'so', name: 'Stack Overflow', url: 'https://stackoverflow.com/search?q={q}', glyph: 'chat' },
+    { keyword: 'wiki', name: 'Wikipedia', url: 'https://en.wikipedia.org/w/index.php?search={q}', glyph: 'book' },
+    { keyword: 'npm', name: 'npm', url: 'https://www.npmjs.com/search?q={q}', glyph: 'package' },
+    { keyword: 'mdn', name: 'MDN', url: 'https://developer.mozilla.org/en-US/search?q={q}', glyph: 'book' },
+    { keyword: 'dex', name: 'DEX', url: 'https://dexonline.ro/definitie/{q}', glyph: 'book' },
   ],
   defaultEngine: 'g',
   shellPrefix: '>',
@@ -72,9 +72,34 @@ export const DEFAULT_CONFIG: Config = {
   frecencyWeight: 0.35,
 }
 
+/**
+ * The emoji the built-in search engines used to carry, and the drawn icon that
+ * replaced each. Only these exact values are swapped: a character someone
+ * chose themselves is theirs to keep.
+ */
+const RETIRED_ENGINE_GLYPHS: Record<string, string> = {
+  '🔎': 'search',
+  '🔍': 'search',
+  '🌐': 'web',
+  '▶': 'play',
+  '🐙': 'code',
+  '💬': 'chat',
+  '📖': 'book',
+  '📘': 'book',
+  '🇷🇴': 'book',
+  '📦': 'package',
+}
+
 /** Renames and reshapes settings written by an older version. */
 function migrate(raw: Record<string, unknown>): Record<string, unknown> {
   const out = { ...raw }
+  if (Array.isArray(out.searchEngines)) {
+    out.searchEngines = out.searchEngines.map((e) => {
+      const engine = e as { glyph?: string }
+      const drawn = engine.glyph && RETIRED_ENGINE_GLYPHS[engine.glyph]
+      return drawn ? { ...engine, glyph: drawn } : engine
+    })
+  }
   if ('followCursorScreen' in out && !('searchWindowScreen' in out)) {
     out.searchWindowScreen = out.followCursorScreen ? 'cursor' : 'primary'
     delete out.followCursorScreen

@@ -1,5 +1,6 @@
 import type { Bootstrap, ResultItem, ThemeInfo } from '../shared/types.js'
 import type { LumeApi } from '../preload/index.js'
+import { glyphSvg } from './glyphs.js'
 
 declare global {
   interface Window {
@@ -113,6 +114,11 @@ function renderEmptyState() {
   el.emptyState.hidden = false
 }
 
+/** A name we draw becomes an icon; anything else stays the character it is. */
+function glyphMarkup(glyph: string | undefined): string {
+  return glyphSvg(glyph) ?? (glyph ? escapeHtml(glyph) : (glyphSvg('app') as string))
+}
+
 function renderResults() {
   el.list.replaceChildren()
 
@@ -133,7 +139,7 @@ function renderResults() {
 
     const icon = document.createElement('div')
     icon.className = 'row-icon'
-    icon.innerHTML = '<span class="glyph">' + escapeHtml(item.glyph ?? '▢') + '</span>'
+    icon.innerHTML = '<span class="glyph">' + glyphMarkup(item.glyph) + '</span>'
     if (item.iconKey) loadIcon(item.iconKey, icon)
 
     const text = document.createElement('div')
@@ -413,6 +419,15 @@ function overrideCss(cfg: Bootstrap['config'], accentColor: string | null): stri
   return rules.length ? ':root {\n' + rules.join('\n') + '\n}' : ''
 }
 
+/**
+ * Themes may name their own character for the query box through
+ * `--search-glyph`; the drawn magnifier is what they get when they do not.
+ */
+function applySearchGlyph() {
+  const themed = getComputedStyle(el.glyph).getPropertyValue('--search-glyph').trim()
+  el.glyph.innerHTML = themed && themed !== '""' && themed !== "''" ? '' : (glyphSvg('search') as string)
+}
+
 function applyBootstrap(b: Bootstrap) {
   config = b.config
   indexCount = b.indexCount
@@ -421,11 +436,13 @@ function applyBootstrap(b: Bootstrap) {
   document.documentElement.dataset.backdrop = b.config.backdrop
   document.documentElement.dataset.animate = String(b.config.useAnimation)
   el.input.placeholder = b.config.showPlaceholder ? b.config.placeholder : ''
+  applySearchGlyph()
   reportHeight()
 }
 
 api.onThemeCss((css) => {
   el.theme.textContent = css
+  applySearchGlyph()
   reportHeight()
 })
 

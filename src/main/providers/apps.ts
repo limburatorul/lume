@@ -53,7 +53,7 @@ export function appsProvider(query: string): ResultItem[] {
       title: entry.name,
       subtitle: entry.kind === 'uwp' ? 'Store app' : shortenPath(entry.subtitle),
       iconKey: entry.iconPath,
-      glyph: entry.kind === 'url' ? '🔗' : '▢',
+      glyph: entry.kind === 'url' ? 'link' : 'app',
       score,
       provider: 'apps',
       matches: match.positions,
@@ -91,7 +91,7 @@ export function frequentApps(limit: number): ResultItem[] {
     title: entry.name,
     subtitle: entry.kind === 'uwp' ? 'Store app' : shortenPath(entry.subtitle),
     iconKey: entry.iconPath,
-    glyph: entry.kind === 'url' ? '🔗' : '▢',
+    glyph: entry.kind === 'url' ? 'link' : 'app',
     score,
     provider: 'apps',
     action:
