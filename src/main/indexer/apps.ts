@@ -31,6 +31,7 @@ export interface AppEntry {
    * yields a generic glyph, so the resolved .exe is tried ahead of it.
    */
   iconPath?: string
+  /** The shortcut's own description, when it has one. */
   subtitle: string
 }
 
@@ -217,7 +218,9 @@ class AppIndex extends EventEmitter {
           // A shortcut's own .ico beats its target: Chrome web apps, script
           // launchers and GOG games all point at a host exe with someone else's icon.
           iconPath: [/\.ico$/i.test(icon) && fs.existsSync(icon) ? icon : '', target, file].filter(Boolean).join('|'),
-          subtitle: description?.trim() || target || file,
+          // Just the shortcut's own words; the path is shown separately, and
+          // only on the row you are about to launch.
+          subtitle: description?.trim() ?? '',
         })
       } else if (ext === '.url') {
         let url = ''
@@ -239,7 +242,7 @@ class AppIndex extends EventEmitter {
           // Most .url shortcuts name their own icon; without it there is
           // nothing local to draw from, so the row keeps its 🔗 glyph.
           iconPath: iconFile && fs.existsSync(iconFile) ? iconFile : undefined,
-          subtitle: url,
+          subtitle: '',
         })
       } else {
         out.push({
@@ -250,7 +253,7 @@ class AppIndex extends EventEmitter {
           launch: file,
           exePath: file,
           iconPath: file,
-          subtitle: file,
+          subtitle: '',
         })
       }
     }

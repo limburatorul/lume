@@ -149,7 +149,7 @@ function renderResults() {
     title.innerHTML = highlight(item.title, item.matches)
     const sub = document.createElement('div')
     sub.className = 'row-sub'
-    sub.textContent = item.subtitle ?? ''
+    sub.textContent = subFor(item, index === selected)
     text.append(title, sub)
 
     const hint = document.createElement('div')
@@ -198,11 +198,20 @@ function renderContext() {
   reportHeight()
 }
 
+/** The chosen row shows where it leads; the others stay readable. */
+function subFor(item: ResultItem, isSelected: boolean): string {
+  return (isSelected && item.detail) || item.subtitle || ''
+}
+
 function setSelected(index: number, scroll = true) {
   if (!items.length) return
   selected = Math.max(0, Math.min(index, items.length - 1))
   const rows = el.list.children
-  for (let i = 0; i < rows.length; i++) rows[i].classList.toggle('selected', i === selected)
+  for (let i = 0; i < rows.length; i++) {
+    rows[i].classList.toggle('selected', i === selected)
+    const sub = rows[i].querySelector('.row-sub')
+    if (sub) sub.textContent = subFor(items[i], i === selected)
+  }
   if (scroll) rows[selected]?.scrollIntoView({ block: 'nearest' })
   if (contextOpen) closeContext()
 }

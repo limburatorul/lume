@@ -51,7 +51,8 @@ export function appsProvider(query: string): ResultItem[] {
     out.push({
       id: entry.id,
       title: entry.name,
-      subtitle: entry.kind === 'uwp' ? 'Store app' : shortenPath(entry.subtitle),
+      subtitle: subtitleFor(entry),
+      detail: pathOf(entry),
       iconKey: entry.iconPath,
       glyph: entry.kind === 'url' ? 'link' : 'app',
       score,
@@ -68,6 +69,24 @@ export function appsProvider(query: string): ResultItem[] {
   }
 
   return out
+}
+
+/**
+ * What the row says when it is not the one selected: the shortcut's own
+ * description if it wrote one, and otherwise what kind of thing it is. A path
+ * is no help in choosing between results - it is only worth reading once you
+ * have chosen - so it lives in `detail` instead.
+ */
+function subtitleFor(entry: AppEntry): string {
+  if (entry.subtitle) return entry.subtitle
+  return entry.kind === 'uwp' ? 'Store app' : entry.kind === 'url' ? 'Link' : 'Application'
+}
+
+/** The file behind the row, shown while it is selected. */
+function pathOf(entry: AppEntry): string | undefined {
+  if (entry.kind === 'uwp') return undefined
+  if (entry.kind === 'url') return entry.launch
+  return shortenPath(entry.exePath ?? entry.launch)
 }
 
 /** Keeps subtitles readable: "…\JetBrains\PyCharm\bin\pycharm64.exe". */
@@ -89,7 +108,8 @@ export function frequentApps(limit: number): ResultItem[] {
   return scored.map(({ entry, score }) => ({
     id: entry.id,
     title: entry.name,
-    subtitle: entry.kind === 'uwp' ? 'Store app' : shortenPath(entry.subtitle),
+    subtitle: subtitleFor(entry),
+    detail: pathOf(entry),
     iconKey: entry.iconPath,
     glyph: entry.kind === 'url' ? 'link' : 'app',
     score,

@@ -32,6 +32,9 @@ export interface ResultItem {
   id: string
   title: string
   subtitle?: string
+  /** Shown in place of the subtitle while the row is selected: the path or
+   *  address behind it, which only matters once this is the chosen row. */
+  detail?: string
   /** Key the renderer passes back to `getIcon` for lazy icon loading. */
   iconKey?: string
   /** Inline fallback icon: a single glyph or emoji drawn when no bitmap exists. */
