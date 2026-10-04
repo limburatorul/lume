@@ -188,9 +188,13 @@ function renderContext() {
     hint.className = 'hint'
     hint.textContent = alt.hint ?? ''
     li.append(label, hint)
+    // Only move the highlight. Rebuilding the list here put a fresh element
+    // under the pointer, whose own mouseenter rebuilt it again, so the item
+    // pressed was never the one released on and no click ever registered.
     li.addEventListener('mouseenter', () => {
       contextSelected = i
-      renderContext()
+      const entries = el.contextList.children
+      for (let n = 0; n < entries.length; n++) entries[n].classList.toggle('selected', n === i)
     })
     li.addEventListener('click', () => runAlt(i))
     el.contextList.append(li)
