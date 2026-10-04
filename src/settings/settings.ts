@@ -194,6 +194,7 @@ const SECTIONS: Section[] = [
             kind: 'number',
             path: 'ui.cornerRadius',
             label: 'Corner radius',
+            help: 'Only with Background material set to None. With acrylic or mica, Windows rounds the window itself.',
             min: 0,
             max: 40,
             suffix: 'px',

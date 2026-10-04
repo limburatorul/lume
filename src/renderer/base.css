@@ -119,6 +119,18 @@ body {
   color: var(--text);
 }
 
+/*
+ * With a system backdrop the window's outline belongs to Windows: it clips the
+ * window to its own 8px corners and draws its own 1px border. A larger CSS
+ * radius left the backdrop showing between the two curves at every corner,
+ * and the CSS border drew a second outline just inside Windows' one. So the
+ * panel fills the window square and Windows does the rounding.
+ */
+html:not([data-backdrop="none"]) .lume {
+  border-radius: 0;
+  border-color: transparent;
+}
+
 html[data-animate="false"] .lume {
   animation: none;
 }
