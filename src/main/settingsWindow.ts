@@ -9,6 +9,18 @@ const ICON = path.resolve(here, '..', 'assets', 'icon.png')
 
 let win: BrowserWindow | null = null
 
+const TITLEBAR_HEIGHT = 44
+
+/** Window-control colours, which have to be told about the theme by hand. */
+function overlay() {
+  const dark = nativeTheme.shouldUseDarkColors
+  return {
+    color: dark ? '#101015' : '#eeeef3',
+    symbolColor: dark ? '#e6e6ee' : '#16161c',
+    height: TITLEBAR_HEIGHT,
+  }
+}
+
 export function openSettings() {
   if (win && !win.isDestroyed()) {
     if (win.isMinimized()) win.restore()
@@ -26,6 +38,10 @@ export function openSettings() {
     title: 'Lume Settings',
     icon: ICON,
     autoHideMenuBar: true,
+    // The window keeps Windows' buttons and resizing, but draws its own title
+    // strip, so settings look like the launcher rather than a stray dialog.
+    titleBarStyle: 'hidden',
+    titleBarOverlay: overlay(),
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#16161c' : '#f7f7fa',
     webPreferences: {
       preload: PRELOAD,
@@ -36,8 +52,14 @@ export function openSettings() {
   })
 
   win.setMenu(null)
-  win.once('ready-to-show', () => win?.show())
+  // With the title bar hidden, 'ready-to-show' never arrives on Windows, so
+  // the window would stay invisible waiting for it; a finished load is a good
+  // enough moment, and backgroundColor covers the first frame.
+  win.webContents.once('did-finish-load', () => win?.show())
   win.on('closed', () => (win = null))
+  nativeTheme.on('updated', () => {
+    if (win && !win.isDestroyed()) win.setTitleBarOverlay(overlay())
+  })
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
 
   void win.loadFile(PAGE)

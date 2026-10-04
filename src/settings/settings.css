@@ -50,10 +50,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Windows' own buttons sit at the right of this strip; everything in it must
+   stay draggable, so nothing interactive belongs here. */
+.titlebar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-faint);
+  font-size: 12.5px;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
 .shell {
   display: grid;
   grid-template-columns: 208px 1fr;
-  height: 100%;
+  height: calc(100% - 44px);
 }
 
 /* ---------- sidebar ---------- */
@@ -532,4 +547,26 @@ table.keys td {
     opacity: 0;
     transform: translate(-50%, 8px);
   }
+}
+
+/* The default Windows scrollbar is a light slab in a dark window. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  background-clip: content-box;
 }
