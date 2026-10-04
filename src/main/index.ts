@@ -28,6 +28,14 @@ import { launcherWindow } from './window.js'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const TRAY_ICON = path.resolve(here, '..', 'assets', 'tray.png')
 
+/*
+ * Windows fades and slides a window into place over ~190ms when it is shown.
+ * For a launcher summoned by a hotkey that reads as two windows: a washed-out
+ * ghost drifting down, then the real one settling. The panel plays its own
+ * 110ms rise instead, which is the motion the themes actually control.
+ */
+app.commandLine.appendSwitch('wm-window-animations-disabled')
+
 let tray: Tray | null = null
 let registeredHotkey = ''
 /** Results from the last query, so `execute` can look an item up by id. */

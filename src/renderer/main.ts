@@ -439,6 +439,12 @@ api.onConfigChanged((b) => {
 })
 
 api.onShown(() => {
+  // The OS no longer animates the window in, so the panel's own rise has to
+  // run on every show rather than only on the first paint after load.
+  el.root.style.animation = 'none'
+  void el.root.offsetHeight
+  el.root.style.animation = ''
+
   const mode = config?.lastQueryMode ?? 'empty'
   if (mode === 'empty') el.input.value = ''
   el.input.focus()
