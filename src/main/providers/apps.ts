@@ -14,10 +14,17 @@ function altActionsFor(entry: AppEntry): AltAction[] {
     alts.push({ label: 'Copy app ID', action: { kind: 'copy', text: entry.launch } })
     return alts
   }
+  if (entry.kind === 'url') {
+    // A link has no file to elevate or reveal; the address is all there is.
+    alts.push({ label: 'Copy link', action: { kind: 'copy', text: entry.launch } })
+    return alts
+  }
   const exe = entry.exePath ?? entry.launch
   alts.push({
     label: 'Run as administrator',
-    action: { kind: 'launch', target: exe, admin: true },
+    // Elevate the shortcut rather than its target, as Explorer does: the .lnk
+    // carries the arguments and working directory, which a bare exe loses.
+    action: { kind: 'launch', target: entry.launch, admin: true },
     hint: 'Ctrl+Enter',
   })
   alts.push({

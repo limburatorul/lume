@@ -17,9 +17,18 @@ function psQuote(value: string) {
   return "'" + value.replace(/'/g, "''") + "'"
 }
 
-function detached(command: string, args: string[], opts: { hidden?: boolean } = {}) {
+/**
+ * Spawns a helper and forgets about it.
+ *
+ * `elevates` is the one case that must not be detached: ShellExecute's "runas"
+ * does nothing at all - no prompt, no error, exit code 0 - when the process
+ * asking for it was created with DETACHED_PROCESS. The wrapper exits straight
+ * away regardless, and the elevated process is created by the system rather
+ * than as its child, so nothing stays tied to Lume.
+ */
+function run(command: string, args: string[], opts: { hidden?: boolean; elevates?: boolean } = {}) {
   const child = spawn(command, args, {
-    detached: true,
+    detached: !opts.elevates,
     stdio: 'ignore',
     windowsHide: opts.hidden ?? true,
   })
@@ -33,7 +42,7 @@ function startProcess(target: string, args: string[] | undefined, cwd: string | 
   if (args?.length) parts.push('-ArgumentList', args.map(psQuote).join(','))
   if (cwd) parts.push('-WorkingDirectory', psQuote(cwd))
   if (admin) parts.push('-Verb', 'RunAs')
-  detached('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', parts.join(' ')], { hidden: true })
+  run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', parts.join(' ')], { hidden: true, elevates: admin })
 }
 
 export async function execute(action: Action, ctx: ExecuteContext): Promise<void> {
@@ -50,7 +59,7 @@ export async function execute(action: Action, ctx: ExecuteContext): Promise<void
       if (action.path.toLowerCase().endsWith('.lnk')) {
         // Let the shell resolve the shortcut so its own args and working
         // directory are honoured, exactly as a double-click in Explorer would.
-        detached('cmd.exe', ['/c', 'start', '', action.path], { hidden: true })
+        run('cmd.exe', ['/c', 'start', '', action.path], { hidden: true })
       } else {
         const err = await shell.openPath(action.path)
         if (err) console.error('[exec] openPath failed:', err)
@@ -60,7 +69,7 @@ export async function execute(action: Action, ctx: ExecuteContext): Promise<void
     }
 
     case 'launchUwp': {
-      detached('explorer.exe', ['shell:AppsFolder\\' + action.appId], { hidden: true })
+      run('explorer.exe', ['shell:AppsFolder\\' + action.appId], { hidden: true })
       ctx.hideWindow()
       return
     }
@@ -91,31 +100,31 @@ export async function execute(action: Action, ctx: ExecuteContext): Promise<void
           : ['/k', action.command]
         const exe = isPwsh ? 'powershell.exe' : 'cmd.exe'
         const argList = inner.map(psQuote).join(',')
-        detached(
+        run(
           'powershell.exe',
           [
             '-NoProfile',
             '-Command',
             'Start-Process -FilePath ' + psQuote(exe) + ' -ArgumentList ' + argList + ' -Verb RunAs',
           ],
-          { hidden: true },
+          { hidden: true, elevates: true },
         )
       } else if (action.hidden) {
         if (isPwsh) {
-          detached('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', action.command], {
+          run('powershell.exe', ['-NoProfile', '-WindowStyle', 'Hidden', '-Command', action.command], {
             hidden: true,
           })
         } else {
-          detached('cmd.exe', ['/c', action.command], { hidden: true })
+          run('cmd.exe', ['/c', action.command], { hidden: true })
         }
       } else {
         // Visible console that stays open so output is readable.
         if (isPwsh) {
-          detached('cmd.exe', ['/c', 'start', '', 'powershell.exe', '-NoExit', '-Command', action.command], {
+          run('cmd.exe', ['/c', 'start', '', 'powershell.exe', '-NoExit', '-Command', action.command], {
             hidden: true,
           })
         } else {
-          detached('cmd.exe', ['/c', 'start', '', 'cmd.exe', '/k', action.command], { hidden: true })
+          run('cmd.exe', ['/c', 'start', '', 'cmd.exe', '/k', action.command], { hidden: true })
         }
       }
       ctx.hideWindow()

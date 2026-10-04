@@ -152,7 +152,12 @@ function renderResults() {
     if (!hint.textContent) hint.style.display = 'none'
 
     li.append(icon, text, hint)
-    li.addEventListener('mouseenter', () => setSelected(index, false))
+    // Hovering must not steal the selection while the action menu is open:
+    // the pointer sits over a row when the menu opens, and the window growing
+    // under it is enough to fire this and close the menu.
+    li.addEventListener('mouseenter', () => {
+      if (!contextOpen) setSelected(index, false)
+    })
     li.addEventListener('click', () => runPrimary())
     li.addEventListener('contextmenu', (e) => {
       e.preventDefault()
