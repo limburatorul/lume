@@ -14,6 +14,7 @@ import {
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Bootstrap, Config, ResultItem } from '../shared/types.js'
+import { seeWhoHolds, worksWith, writeCard } from './ecosystem.js'
 import { execute } from './executor.js'
 import { clearIconCache, getIcon, initIcons } from './icons.js'
 import { appIndex } from './indexer/apps.js'
@@ -74,13 +75,22 @@ function registerHotkey() {
     // silently remapping, so the fix is obvious.
     console.error('[hotkey] "' + wanted + '" is already taken by another app')
     if (Notification.isSupported()) {
-      new Notification({
+      const note = new Notification({
         title: 'Lume: hotkey unavailable',
-        body: wanted + ' is already registered by another application. Pick a different one in Settings.',
-      }).show()
+        body: wanted + ' is already registered by another application. Click to see who holds it, or pick a different one in Settings.',
+      })
+      note.on('click', () => showWhoHolds(wanted))
+      note.show()
     }
   }
   updateTray()
+}
+
+/** Opens HotkeyScan on the taken combination, or its page when it is not installed. */
+function showWhoHolds(accelerator: string) {
+  const target = seeWhoHolds(accelerator)
+  if ('url' in target) void shell.openExternal(target.url)
+  else void execute({ kind: 'launch', target: target.exe, args: target.args }, ctx)
 }
 
 function updateTray() {
@@ -278,6 +288,13 @@ function registerIpc() {
     active: registeredHotkey === settings.get().hotkey,
   }))
 
+  ipcMain.handle('settings:seeWhoHolds', () => showWhoHolds(settings.get().hotkey))
+  ipcMain.handle('settings:worksWith', () => worksWith())
+  // Only sister pages: the settings renderer must not be able to open arbitrary URLs.
+  ipcMain.handle('settings:openSisterPage', (_e, url: string) => {
+    if (typeof url === 'string' && url.startsWith('https://protagonistlabs.app/')) void shell.openExternal(url)
+  })
+
   ipcMain.handle('settings:preview', () => launcherWindow.show())
   ipcMain.handle('settings:version', () => app.getVersion())
 
@@ -341,6 +358,8 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     app.setAppUserModelId('dev.tucu.lume')
+    // A dev run is electron.exe, which no sister should ever be pointed at.
+    if (app.isPackaged) writeCard(app.getVersion(), process.execPath)
 
     settings.init()
     themes.init()

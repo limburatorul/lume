@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Config, IndexStats, ThemeInfo, UpdateStatus } from '../shared/types.js'
+import type { Config, IndexStats, ThemeInfo, UpdateStatus, WorksWith } from '../shared/types.js'
 
 /** API for the settings window. Deliberately separate from the launcher's. */
 const api = {
@@ -16,6 +16,10 @@ const api = {
   clearIconCache: (): Promise<void> => ipcRenderer.invoke('settings:clearIconCache'),
   /** Reports whether the hotkey could actually be claimed from the OS. */
   hotkeyStatus: (): Promise<{ wanted: string; active: boolean }> => ipcRenderer.invoke('settings:hotkeyStatus'),
+  /** HotkeyScan on the configured hotkey, or its page when it is not installed. */
+  seeWhoHolds: (): Promise<void> => ipcRenderer.invoke('settings:seeWhoHolds'),
+  worksWith: (): Promise<WorksWith> => ipcRenderer.invoke('settings:worksWith'),
+  openSisterPage: (url: string): Promise<void> => ipcRenderer.invoke('settings:openSisterPage', url),
   previewLauncher: (): Promise<void> => ipcRenderer.invoke('settings:preview'),
   appVersion: (): Promise<string> => ipcRenderer.invoke('settings:version'),
 

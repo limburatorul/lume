@@ -351,6 +351,10 @@ button:hover {
   filter: brightness(1.07);
 }
 
+.field-help a {
+  color: var(--accent);
+}
+
 .hotkey-input {
   font-family: var(--mono);
   text-align: center;
@@ -491,6 +495,19 @@ table.engines input {
   color: var(--text-dim);
   margin-bottom: 10px;
   max-width: 70ch;
+}
+
+.about.works p {
+  margin-bottom: 2px;
+}
+
+.about a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.about a:hover {
+  text-decoration: underline;
 }
 
 .about code,

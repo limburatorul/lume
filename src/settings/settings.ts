@@ -515,7 +515,10 @@ const SECTIONS: Section[] = [
     label: 'About',
     title: 'About Lume',
     blurb: '',
-    groups: () => [{ title: 'Keys', fields: [{ kind: 'custom', render: renderAbout }] }],
+    groups: () => [
+      { title: 'Keys', fields: [{ kind: 'custom', render: renderAbout }] },
+      { title: 'Works with', fields: [{ kind: 'custom', render: renderWorksWith }] },
+    ],
   },
 ]
 
@@ -662,11 +665,19 @@ function buildHotkey(f: Extract<Field, { kind: 'hotkey' }>) {
     readOnly: true,
   })
   const badge = el('span', { class: 'status', textContent: '…' })
+  const whoLink = el('a', { href: '#', textContent: 'See who holds it' })
+  whoLink.addEventListener('click', (e) => {
+    e.preventDefault()
+    void api.seeWhoHolds()
+  })
+  const who = el('div', { class: 'field-help' }, whoLink)
+  who.style.display = 'none'
 
   const refresh = () =>
     void api.hotkeyStatus().then((s) => {
       badge.className = 'status ' + (s.active ? 'ok' : 'bad')
       badge.textContent = s.active ? 'active' : 'in use by another app'
+      who.style.display = s.active ? 'none' : ''
     })
 
   input.addEventListener('focus', () => {
@@ -689,7 +700,9 @@ function buildHotkey(f: Extract<Field, { kind: 'hotkey' }>) {
   })
 
   refresh()
-  return fieldShell(f.label, f.help, el('div', { class: 'field-control' }, input, badge))
+  const shell = fieldShell(f.label, f.help, el('div', { class: 'field-control' }, input, badge))
+  shell.firstElementChild!.append(who)
+  return shell
 }
 
 function buildList(f: Extract<Field, { kind: 'list' }>) {
@@ -1018,6 +1031,30 @@ function renderAbout(): HTMLElement {
     <p>Type <code>lume</code> in the launcher to reach the rebuild, themes and
     developer-tools commands without opening this window.</p>
   `
+  return wrap
+}
+
+/** Sister apps that add something to Lume, read from their cards when the page opens. */
+function renderWorksWith(): HTMLElement {
+  const wrap = el('div', { class: 'about works' })
+  wrap.style.padding = '14px 16px'
+  const link = (name: string, url: string) => {
+    const a = el('a', { href: '#', textContent: name })
+    a.addEventListener('click', (e) => {
+      e.preventDefault()
+      void api.openSisterPage(url)
+    })
+    return a
+  }
+  void api.worksWith().then(({ lines, offer }) => {
+    for (const line of lines) {
+      wrap.append(el('p', {}, line.url ? link(line.name, line.url) : line.name, ' · ' + line.text))
+    }
+    if (!offer.length) return
+    const p = el('p', {}, 'Owners of one of our apps get 30% off the others: ')
+    offer.forEach((o, i) => p.append(...(i ? [' · '] : []), link(o.name, o.url)))
+    wrap.append(p)
+  })
   return wrap
 }
 

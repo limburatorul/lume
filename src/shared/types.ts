@@ -173,6 +173,20 @@ export type UpdateStatus =
   | { state: 'error'; message: string }
   | { state: 'unsupported'; reason: string }
 
+/** One line of About → Works with: a sister app and what it adds to Lume. */
+export interface WorksWithLine {
+  name: string
+  text: string
+  /** Its page, for a sister that is not installed. */
+  url?: string
+}
+
+export interface WorksWith {
+  lines: WorksWithLine[]
+  /** Paid apps not installed, each linked with its discount code; empty unless one was bought. */
+  offer: Array<{ name: string; url: string }>
+}
+
 export interface IndexStats {
   total: number
   byKind: Record<string, number>

@@ -2,6 +2,7 @@ import type { ResultItem } from '../../shared/types.js'
 import { appsProvider, frequentApps } from '../providers/apps.js'
 import { calculatorProvider } from '../providers/calculator.js'
 import { shellProvider } from '../providers/shell.js'
+import { sistersProvider } from '../providers/sisters.js'
 import { systemProvider } from '../providers/system.js'
 import { websearchProvider } from '../providers/websearch.js'
 import { settings } from '../settings.js'
@@ -26,6 +27,7 @@ export function search(rawQuery: string): ResultItem[] {
   const items = [
     ...calculatorProvider(query),
     ...appsProvider(query),
+    ...sistersProvider(query),
     ...systemProvider(query),
     ...websearchProvider(query),
   ]

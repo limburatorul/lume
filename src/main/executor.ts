@@ -36,10 +36,19 @@ function run(command: string, args: string[], opts: { hidden?: boolean; elevates
   child.on('error', (err) => console.error('[exec] spawn failed:', err))
 }
 
+/**
+ * Start-Process joins -ArgumentList with plain spaces, so an argument with a
+ * space in it (a film's path from Reel) has to carry its own command-line quoting.
+ */
+function cmdArg(value: string) {
+  if (value && !/[\s"]/.test(value)) return value
+  return '"' + value.replace(/(\\*)"/g, '$1$1\\"').replace(/(\\+)$/, '$1$1') + '"'
+}
+
 /** Launches through PowerShell's Start-Process, which handles UAC and args. */
 function startProcess(target: string, args: string[] | undefined, cwd: string | undefined, admin: boolean) {
   const parts = ['Start-Process', '-FilePath', psQuote(target)]
-  if (args?.length) parts.push('-ArgumentList', args.map(psQuote).join(','))
+  if (args?.length) parts.push('-ArgumentList', args.map((a) => psQuote(cmdArg(a))).join(','))
   if (cwd) parts.push('-WorkingDirectory', psQuote(cwd))
   if (admin) parts.push('-Verb', 'RunAs')
   run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', parts.join(' ')], { hidden: true, elevates: admin })

@@ -1,10 +1,12 @@
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { scoreCandidate } from '../src/main/search/fuzzy.js'
 import { isPinned, rankScore, PINNED_SCORE } from '../src/main/search/rank.js'
 import { usage } from '../src/main/store.js'
 import { evaluate } from '../src/main/providers/calculator.js'
+import { sistersProvider } from '../src/main/providers/sisters.js'
+import { seeWhoHolds, toHotkeyScanCombo, worksWith } from '../src/main/ecosystem.js'
 
 const APPS = [
   'PyCharm Community Edition 2024.1', 'Cheat Engine 7.5', 'Arduino IDE', 'AIDA64 Extreme',
@@ -144,6 +146,78 @@ console.log('\n--- what the ranker learns ---')
   )
 
   rmSync(dir, { recursive: true, force: true })
+}
+
+/* ------------------------------------------------------- sister apps */
+
+console.log('\n--- sister apps ---')
+{
+  const root = mkdtempSync(path.join(os.tmpdir(), 'lume-sisters-'))
+  const shared = path.join(root, 'ProtagonistLabs')
+  mkdirSync(path.join(shared, 'apps'), { recursive: true })
+  mkdirSync(path.join(shared, 'data'), { recursive: true })
+  const put = (rel: string, value: unknown) =>
+    writeFileSync(path.join(shared, rel), typeof value === 'string' ? value : JSON.stringify(value))
+  const card = (id: string, name: string, exe: string, extra = {}) =>
+    put('apps/' + id + '.json', { schema: 1, updated: '2026-10-15T00:00:00Z', id, name, exe, ...extra })
+
+  // Any file that exists stands in for an installed app's exe.
+  const exe = process.execPath
+  card('shelf', 'Shelf', exe, { paid: true, edition: 'full' })
+  put('data/shelf.items.json', {
+    schema: 1,
+    items: [
+      { title: 'The Witcher 3', subtitle: 'Steam', kind: 'game', run: { exe, args: ['--launch', 'w3'] } },
+      { title: 'Witcher with no run', kind: 'game' },
+      { title: 'Witcher bad args', kind: 'game', run: { exe, args: ['--launch', 7] } },
+    ],
+  })
+  card('reel', 'Reel', exe)
+  put('data/reel.items.json', '{ not json')
+  put('data/planner.items.json', { schema: 1, items: [{ title: 'Witcher plan', kind: 'task', run: { exe } }] })
+  card('filelabs', 'File Labs', path.join(root, 'gone.exe'))
+  put('data/filelabs.items.json', { schema: 1, items: [{ title: 'Witcher folder', kind: 'folder', run: { exe } }] })
+  card('stash', 'Stash', exe)
+  put('data/stash.items.json', { schema: 2, items: [{ title: 'Witcher future', kind: 'x', run: { exe } }] })
+  card('hotkeyscan', 'HotkeyScan', exe, { commands: { check: ['--check', '{combo}'] } })
+
+  process.env.APPDATA = root
+  const got = sistersProvider('witcher')
+  const w3 = got.find((r) => r.title === 'The Witcher 3')
+  const bad = got.find((r) => r.title === 'Witcher bad args')
+  const checks: Array<[string, boolean]> = [
+    ['reads a sister\'s items', w3?.subtitle === 'Shelf · game' && w3.detail === 'Steam'],
+    ['runs run.exe with run.args', w3?.action.kind === 'launch' && w3.action.target === exe && w3.action.args?.join(' ') === '--launch w3'],
+    ['drops non-string args', bad?.action.kind === 'launch' && bad.action.args?.join(' ') === '--launch'],
+    ['skips an item without run', !got.some((r) => r.title === 'Witcher with no run')],
+    ['skips items of an app without a card', !got.some((r) => r.title === 'Witcher plan')],
+    ['skips items of an uninstalled app', !got.some((r) => r.title === 'Witcher folder')],
+    ['skips a wrong schema', !got.some((r) => r.title === 'Witcher future')],
+    ['survives garbage json', got.length === 2],
+    ['electron accelerator to HotkeyScan', toHotkeyScanCombo('CommandOrControl+Super+Space') === 'Ctrl+Win+Space'],
+  ]
+  const holds = seeWhoHolds('Alt+Space')
+  checks.push(['see who holds it runs HotkeyScan --check', 'exe' in holds && holds.args.join(' ') === '--check Alt+Space'])
+  const { lines, offer } = worksWith()
+  const names = lines.map((l) => l.name).join(',')
+  checks.push(['works with: installed first, without a link', lines[0]?.name === 'Shelf' && !lines[0].url])
+  checks.push(['works with: installed, then missing', names === 'Shelf,HotkeyScan,Reel,File Labs,Planner'])
+  checks.push(['works with: a missing sister links its page, no code', lines.some((l) => l.name === 'File Labs' && l.url === 'https://protagonistlabs.app/filelabs/?utm_source=lume&utm_medium=app&utm_campaign=works-with')])
+  checks.push(['works with: no 30% off on a sister line', !lines.some((l) => /30%|code=/.test(l.text + (l.url ?? '')))])
+  checks.push(['works with: one offer line, missing paid apps, max 4', offer.map((o) => o.name).join(',') === 'Frostpane,Planner,Reminder'])
+  checks.push(['works with: offer links carry the code', offer.every((o) => o.url.includes('?code=SECOND30&utm_source=lume'))])
+
+  process.env.APPDATA = path.join(root, 'nowhere')
+  checks.push(['no shared folder: no results', sistersProvider('witcher').length === 0])
+  checks.push(['no HotkeyScan: its page', 'url' in seeWhoHolds('Alt+Space')])
+  checks.push(['works with: at most three missing, most useful first', worksWith().lines.map((l) => l.name).join(',') === 'Shelf,File Labs,HotkeyScan'])
+  checks.push(['works with: nothing bought, no offer', worksWith().offer.length === 0])
+
+  for (const [label, ok] of checks) {
+    if (!ok) failures++
+    console.log((ok ? 'ok  ' : 'FAIL') + '  ' + label)
+  }
+  rmSync(root, { recursive: true, force: true })
 }
 
 console.log('\nfailures:', failures)
