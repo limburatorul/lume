@@ -417,7 +417,7 @@ const SECTIONS: Section[] = [
             path: 'checkForUpdates',
             label: 'Check for updates automatically',
             help:
-              'Asks GitHub for a newer release shortly after start, then every six hours. An installed build downloads it and applies it on the next restart; the portable build tells you and links to the download.',
+              'Asks GitHub for a newer release shortly after start, then every hour. An installed build downloads it and applies it on the next restart; the portable build tells you and links to the download.',
           },
           { kind: 'custom', render: renderUpdatePanel },
         ],
@@ -931,6 +931,7 @@ function renderUpdatePanel(): HTMLElement {
     const s = updateStatus
     action.hidden = true
     action.onclick = null
+    detail.title = ''
 
     switch (s.state) {
       case 'checking':
@@ -966,7 +967,9 @@ function renderUpdatePanel(): HTMLElement {
         break
       case 'error':
         title.textContent = 'Could not check for updates'
-        detail.textContent = s.message
+        // electron-updater's message for a 403 or an offline check is a raw dump; keep it for the tooltip.
+        detail.textContent = 'No connection, or GitHub is busy. Try again later.'
+        detail.title = s.message
         break
       case 'unsupported':
         title.textContent = 'Updates unavailable'

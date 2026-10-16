@@ -9,7 +9,7 @@ const { autoUpdater } = electronUpdater
 
 /** Wait before the first check so it never competes with the initial index. */
 const FIRST_CHECK_DELAY = 25_000
-const RECHECK_INTERVAL = 6 * 60 * 60 * 1000
+const RECHECK_INTERVAL = 60 * 60 * 1000
 
 /** "https://github.com/owner/repo.git" -> "owner/repo" */
 const REPO = (pkg.repository?.url ?? '').replace(/^.*github\.com\//, '').replace(/\.git$/, '')

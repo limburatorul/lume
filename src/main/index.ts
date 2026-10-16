@@ -182,7 +182,7 @@ async function checkUpdatesFromTray() {
   } else if (status.state === 'current') {
     new Notification({ title: 'Lume is up to date', body: 'You are on ' + app.getVersion() + '.' }).show()
   } else if (status.state === 'error') {
-    new Notification({ title: 'Update check failed', body: status.message }).show()
+    new Notification({ title: 'Update check failed', body: 'No connection, or GitHub is busy. Try again later.' }).show()
   } else {
     openSettings()
   }
