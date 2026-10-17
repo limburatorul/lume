@@ -122,23 +122,18 @@ function setTrayMenu() {
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: 'Show Lume', click: () => launcherWindow.show() },
-      { label: 'Settings…', click: () => openSettings() },
-      { type: 'separator' },
-      ...(pending
-        ? [
-            { label: 'Restart and install ' + pending, click: () => updater.install() },
-            { type: 'separator' as const },
-          ]
-        : []),
-      { label: 'Check for updates…', click: () => void checkUpdatesFromTray() },
-      { type: 'separator' },
-      { label: 'Send feedback (feedback@protagonistlabs.app)', click: () => void shell.openExternal('mailto:feedback@protagonistlabs.app?subject=Lume%20feedback') },
-      { label: 'Lume website', click: () => void shell.openExternal('https://protagonistlabs.app/lume/?utm_source=lume&utm_medium=app&utm_campaign=tray') },
-      { label: 'More apps from Protagonist Labs', click: () => void shell.openExternal('https://protagonistlabs.app/?utm_source=lume&utm_medium=app&utm_campaign=more-apps') },
-      { type: 'separator' },
       { label: 'Rebuild app index', click: () => void appIndex.rebuild() },
+      { type: 'separator' },
+      { label: 'Settings…', click: () => openSettings() },
       { label: 'Open themes folder', click: () => void shell.openPath(themes.dir) },
       { label: 'Developer tools', click: () => launcherWindow.toggleDevTools() },
+      pending
+        ? { label: 'Restart and install ' + pending, click: () => updater.install() }
+        : { label: 'Check for updates…', click: () => void checkUpdatesFromTray() },
+      { type: 'separator' },
+      { label: 'Lume website', click: () => void shell.openExternal('https://protagonistlabs.app/lume/?utm_source=lume&utm_medium=app&utm_campaign=tray') },
+      { label: 'Send feedback (feedback@protagonistlabs.app)', click: () => void shell.openExternal('mailto:feedback@protagonistlabs.app?subject=Lume%20feedback') },
+      { label: 'More apps from Protagonist Labs', click: () => void shell.openExternal('https://protagonistlabs.app/?utm_source=lume&utm_medium=app&utm_campaign=more-apps') },
       { type: 'separator' },
       { label: 'Quit Lume', click: () => app.quit() },
     ]),
