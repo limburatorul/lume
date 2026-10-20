@@ -57,8 +57,19 @@ function allCards(): Map<string, Card> {
   return cards
 }
 
-/** Written atomically and off the start path; a failure only costs the sisters a stale card. */
-export function writeCard(version: string, exe: string): void {
+let cardWrite: Promise<void> = Promise.resolve()
+
+export interface DeclaredHotkey {
+  combo: string
+  does: string
+  registered: boolean
+}
+
+/**
+ * Written atomically and off the start path; a failure only costs the sisters a stale card.
+ * hotkeys lets HotkeyScan name Lume as the holder of a combination and see whether it got it.
+ */
+export function writeCard(version: string, exe: string, hotkeys: DeclaredHotkey[]): Promise<void> {
   const dir = path.join(sharedRoot(), 'apps')
   const file = path.join(dir, 'lume.json')
   const card = {
@@ -72,12 +83,15 @@ export function writeCard(version: string, exe: string): void {
     paid: false,
     page: 'https://protagonistlabs.app/lume/',
     commands: { settings: ['--settings'] },
+    hotkeys,
   }
-  fs.promises
-    .mkdir(dir, { recursive: true })
+  // Chained: a hotkey change right after start would otherwise share the .tmp file with the first write.
+  cardWrite = cardWrite
+    .then(() => fs.promises.mkdir(dir, { recursive: true }))
     .then(() => fs.promises.writeFile(file + '.tmp', JSON.stringify(card, null, 2)))
     .then(() => fs.promises.rename(file + '.tmp', file))
     .catch((err) => console.error('[ecosystem] could not write the card:', err))
+  return cardWrite
 }
 
 /**
@@ -115,6 +129,7 @@ const SISTERS: Array<{ id: string; name: string; adds: string; would: string }> 
   { id: 'hotkeyscan', name: 'HotkeyScan', adds: 'shows which app holds a taken hotkey', would: 'would show which app holds a taken hotkey' },
   { id: 'reel', name: 'Reel', adds: 'puts your films in the results', would: 'would put your films in the results' },
   { id: 'planner', name: 'Planner', adds: 'puts your tasks in the results', would: 'would put your tasks in the results' },
+  { id: 'stash', name: 'Stash', adds: 'puts your Thunderbird backups in the results', would: 'would put your Thunderbird backups in the results' },
 ]
 
 const PAID: Array<{ id: string; name: string }> = [

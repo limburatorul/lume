@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { scoreCandidate } from '../src/main/search/fuzzy.js'
@@ -6,7 +6,7 @@ import { isPinned, rankScore, PINNED_SCORE } from '../src/main/search/rank.js'
 import { usage } from '../src/main/store.js'
 import { evaluate } from '../src/main/providers/calculator.js'
 import { sistersProvider } from '../src/main/providers/sisters.js'
-import { seeWhoHolds, toHotkeyScanCombo, worksWith } from '../src/main/ecosystem.js'
+import { seeWhoHolds, toHotkeyScanCombo, worksWith, writeCard } from '../src/main/ecosystem.js'
 
 const APPS = [
   'PyCharm Community Edition 2024.1', 'Cheat Engine 7.5', 'Arduino IDE', 'AIDA64 Extreme',
@@ -177,8 +177,34 @@ console.log('\n--- sister apps ---')
   put('data/planner.items.json', { schema: 1, items: [{ title: 'Witcher plan', kind: 'task', run: { exe } }] })
   card('filelabs', 'File Labs', path.join(root, 'gone.exe'))
   put('data/filelabs.items.json', { schema: 1, items: [{ title: 'Witcher folder', kind: 'folder', run: { exe } }] })
+  card('spacescan', 'SpaceScan', exe)
+  put('data/spacescan.items.json', { schema: 2, items: [{ title: 'Witcher future', kind: 'x', run: { exe } }] })
+  // Exactly what Stash 2.2 writes, plus hostile entries: run.exe and run.args come from another app.
   card('stash', 'Stash', exe)
-  put('data/stash.items.json', { schema: 2, items: [{ title: 'Witcher future', kind: 'x', run: { exe } }] })
+  const zip = 'D:\\Backups\\Thunderbird 2026-10-20.zip'
+  const notExe = path.join(root, 'witcher.bat')
+  writeFileSync(notExe, '')
+  const backup = (title: string, run: unknown) => ({ title, subtitle: 'Thunderbird backup', kind: 'backup', run })
+  put('data/stash.items.json', '\uFEFF' + JSON.stringify({
+    schema: 1,
+    updated: '2026-10-20T08:00:00Z',
+    folder: 'D:\\Backups',
+    items: [
+      backup('Witcher backup 2026-10-20', { exe, args: ['--browse', zip] }),
+      backup('Witcher relative exe', { exe: 'stash.exe', args: [] }),
+      backup('Witcher unc exe', { exe: '\\\\server\\share\\stash.exe', args: [] }),
+      backup('Witcher not an exe', { exe: notExe, args: [] }),
+      backup('Witcher missing exe', { exe: path.join(root, 'gone.exe'), args: [] }),
+      backup('Witcher exe with newline', { exe: exe + '\n', args: [] }),
+      backup('Witcher nine args', { exe, args: Array(9).fill('x') }),
+      backup('Witcher eight args', { exe, args: Array(8).fill('x') }),
+      backup('Witcher long arg', { exe, args: ['x'.repeat(1025)] }),
+      backup('Witcher longest arg', { exe, args: ['x'.repeat(1024)] }),
+      backup('Witcher control arg', { exe, args: ['--browse', 'a\nb'] }),
+      backup('Witcher nul arg', { exe, args: ['a\u0000b'] }),
+      backup('Witcher exe not a string', { exe: 7 }),
+    ],
+  }))
   card('hotkeyscan', 'HotkeyScan', exe, { commands: { check: ['--check', '{combo}'] } })
 
   process.env.APPDATA = root
@@ -193,7 +219,9 @@ console.log('\n--- sister apps ---')
     ['skips items of an app without a card', !got.some((r) => r.title === 'Witcher plan')],
     ['skips items of an uninstalled app', !got.some((r) => r.title === 'Witcher folder')],
     ['skips a wrong schema', !got.some((r) => r.title === 'Witcher future')],
-    ['survives garbage json', got.length === 2],
+    ['survives garbage json', got.filter((r) => r.subtitle.startsWith('Shelf')).length === 2],
+    ['reads Stash backups with a BOM', got.some((r) => r.title === 'Witcher backup 2026-10-20' && r.subtitle === 'Stash · backup' && r.glyph === 'archive' && r.action.kind === 'launch' && r.action.args?.[1] === zip)],
+    ['stash: only the valid items, eight args and 1,024 chars allowed', got.filter((r) => r.subtitle.startsWith('Stash')).map((r) => r.title).sort().join('|') === 'Witcher backup 2026-10-20|Witcher eight args|Witcher longest arg'],
     ['electron accelerator to HotkeyScan', toHotkeyScanCombo('CommandOrControl+Super+Space') === 'Ctrl+Win+Space'],
   ]
   const holds = seeWhoHolds('Alt+Space')
@@ -201,11 +229,18 @@ console.log('\n--- sister apps ---')
   const { lines, offer } = worksWith()
   const names = lines.map((l) => l.name).join(',')
   checks.push(['works with: installed first, without a link', lines[0]?.name === 'Shelf' && !lines[0].url])
-  checks.push(['works with: installed, then missing', names === 'Shelf,HotkeyScan,Reel,File Labs,Planner'])
+  checks.push(['works with: installed, then missing', names === 'Shelf,HotkeyScan,Reel,Stash,File Labs,Planner'])
+  checks.push(['works with: Stash says what it adds', lines.some((l) => l.name === 'Stash' && l.text === 'puts your Thunderbird backups in the results' && !l.url)])
   checks.push(['works with: a missing sister links its page, no code', lines.some((l) => l.name === 'File Labs' && l.url === 'https://protagonistlabs.app/filelabs/?utm_source=lume&utm_medium=app&utm_campaign=works-with')])
   checks.push(['works with: no 30% off on a sister line', !lines.some((l) => /30%|code=/.test(l.text + (l.url ?? '')))])
   checks.push(['works with: one offer line, missing paid apps, max 4', offer.map((o) => o.name).join(',') === 'Frostpane,Planner,Reminder'])
   checks.push(['works with: offer links carry the code', offer.every((o) => o.url.includes('?code=SECOND30&utm_source=lume'))])
+
+  // Two writes back to back, as at start followed at once by a new hotkey: the last one must win.
+  void writeCard('0.3.0', exe, [{ combo: toHotkeyScanCombo('Alt+Space'), does: 'Show or hide Lume', registered: false }])
+  await writeCard('0.3.0', exe, [{ combo: toHotkeyScanCombo('CommandOrControl+Shift+K'), does: 'Show or hide Lume', registered: true }])
+  const own = JSON.parse(readFileSync(path.join(shared, 'apps', 'lume.json'), 'utf8'))
+  checks.push(['card declares the hotkey in HotkeyScan notation', JSON.stringify(own.hotkeys) === '[{"combo":"Ctrl+Shift+K","does":"Show or hide Lume","registered":true}]' && own.schema === 1 && own.id === 'lume'])
 
   process.env.APPDATA = path.join(root, 'nowhere')
   checks.push(['no shared folder: no results', sistersProvider('witcher').length === 0])

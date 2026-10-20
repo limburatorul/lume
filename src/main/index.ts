@@ -14,7 +14,7 @@ import {
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Bootstrap, Config, ResultItem } from '../shared/types.js'
-import { seeWhoHolds, worksWith, writeCard } from './ecosystem.js'
+import { seeWhoHolds, toHotkeyScanCombo, worksWith, writeCard } from './ecosystem.js'
 import { execute } from './executor.js'
 import { clearIconCache, getIcon, initIcons } from './icons.js'
 import { appIndex } from './indexer/apps.js'
@@ -84,6 +84,23 @@ function registerHotkey() {
     }
   }
   updateTray()
+  publishCard(wanted, ok)
+}
+
+let publishedHotkey = ''
+
+/**
+ * The card carries the hotkey and whether Lume got it, so it is rewritten when
+ * either changes - not on every settings save, which also lands here.
+ */
+function publishCard(hotkey: string, registered: boolean) {
+  // A dev run is electron.exe, which no sister should ever be pointed at.
+  if (!app.isPackaged) return
+  const state = hotkey + '|' + registered
+  if (state === publishedHotkey) return
+  publishedHotkey = state
+  const hotkeys = hotkey ? [{ combo: toHotkeyScanCombo(hotkey), does: 'Show or hide Lume', registered }] : []
+  writeCard(app.getVersion(), process.execPath, hotkeys)
 }
 
 /** Opens HotkeyScan on the taken combination, or its page when it is not installed. */
@@ -353,9 +370,6 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     app.setAppUserModelId('dev.tucu.lume')
-    // A dev run is electron.exe, which no sister should ever be pointed at.
-    if (app.isPackaged) writeCard(app.getVersion(), process.execPath)
-
     settings.init()
     themes.init()
     usage.init(app.getPath('userData'))

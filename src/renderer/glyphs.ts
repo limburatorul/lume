@@ -11,6 +11,7 @@
  * character someone put on a custom search engine or command working.
  */
 const PATHS: Record<string, string> = {
+  archive: '<rect x="3.5" y="4.5" width="17" height="4.5" rx="1.5"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9"/><path d="M10 13h4"/>',
   app: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M4 9.5h16"/>',
   book: '<path d="M5 4.5h8.5A3.5 3.5 0 0 1 17 8v11.5H8.5A3.5 3.5 0 0 1 5 16z"/><path d="M8.5 19.5A3.5 3.5 0 0 1 12 16h7"/>',
   calc: '<path d="M6 10h12"/><path d="M6 14h12"/>',

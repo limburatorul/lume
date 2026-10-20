@@ -112,6 +112,14 @@ open; the alternate actions run it hidden or elevated.
 **System commands** — `lock`, `sleep`, `shut down`, `empty recycle bin`, plus the
 launcher's own `Lume: …` commands (rebuild index, open themes folder, devtools).
 
+**Other Protagonist Labs apps** — when Shelf, Reel, Planner, File Labs or Stash is
+installed, its games, films, tasks, folders or Thunderbird backups show up in the
+results too, and About → Works with lists what each one adds. Those entries come
+from another program, so Lume only runs one that points at an existing `.exe` on a
+local drive, with at most 8 plain arguments of up to 1,024 characters each. Lume's
+own card in that shared folder also declares its hotkey and whether it got it, so
+HotkeyScan can name Lume as the holder.
+
 ## Keys
 
 | Key | Action |

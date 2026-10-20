@@ -12,9 +12,13 @@ export interface ExecuteContext {
   openSettings: () => void
 }
 
-/** Escapes a string for embedding in a single-quoted PowerShell literal. */
+/**
+ * Escapes a string for embedding in a single-quoted PowerShell literal.
+ * PowerShell also ends such a literal at the typographic single quotes, so an
+ * argument from a sister's items file carrying one could otherwise break out.
+ */
 function psQuote(value: string) {
-  return "'" + value.replace(/'/g, "''") + "'"
+  return "'" + value.replace(/['\u2018\u2019\u201a\u201b]/g, '$&$&') + "'"
 }
 
 /**

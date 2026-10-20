@@ -18,14 +18,41 @@ const MIN_SCORE = 0.35
 /** The search runs on every keystroke, so the files are read at most this often. */
 const TTL = 30_000
 
-const GLYPHS: Record<string, string> = { game: 'play', film: 'play', task: 'file', folder: 'file' }
+const GLYPHS: Record<string, string> = { game: 'play', film: 'play', task: 'file', folder: 'file', backup: 'archive' }
+
+/*
+ * The items file is written by another app and run as a command line, so it is
+ * untrusted: only a local .exe that exists may be started, with a short, plain
+ * argument list. run.exe is not required to be the card's exe - Reel runs its
+ * player and Planner the copy inside each plan folder.
+ */
+const MAX_ARGS = 8
+const MAX_ARG_LENGTH = 1024
+const CONTROL = /[\u0000-\u001f\u007f]/
+
+function isLocalExe(exe: string, seen: Map<string, boolean>): boolean {
+  let ok = seen.get(exe)
+  if (ok === undefined) {
+    // A drive path only: a UNC path would start a program from the network.
+    ok = /^[a-z]:\\/i.test(exe) && /\.exe$/i.test(exe) && !CONTROL.test(exe)
+    if (ok) {
+      try {
+        ok = fs.statSync(exe).isFile()
+      } catch {
+        ok = false
+      }
+    }
+    seen.set(exe, ok)
+  }
+  return ok
+}
 
 let cache: { root: string; at: number; entries: Entry[] } | null = null
 
 /**
  * Launcher entries shared by the other Protagonist Labs apps (Shelf's games,
- * Reel's films, Planner's tasks, File Labs' folders): every
- * data\<id>.items.json whose app is still installed.
+ * Reel's films, Planner's tasks, File Labs' folders, Stash's Thunderbird
+ * backups): every data\<id>.items.json whose app is still installed.
  */
 function load(root: string): Entry[] {
   const dir = path.join(root, 'data')
@@ -36,6 +63,7 @@ function load(root: string): Entry[] {
     return []
   }
   const entries: Entry[] = []
+  const exes = new Map<string, boolean>()
   for (const file of files) {
     const appId = file.slice(0, -'.items.json'.length)
     const card = readCard(appId)
@@ -50,8 +78,9 @@ function load(root: string): Entry[] {
     for (const item of doc.items) {
       const run = item?.run
       if (typeof item?.title !== 'string' || !item.title.trim()) continue
-      if (typeof run?.exe !== 'string' || !run.exe) continue
-      const args = Array.isArray(run.args) ? run.args.filter((a: unknown) => typeof a === 'string') : []
+      if (typeof run?.exe !== 'string' || !isLocalExe(run.exe, exes)) continue
+      const args: string[] = Array.isArray(run.args) ? run.args.filter((a: unknown) => typeof a === 'string') : []
+      if (args.length > MAX_ARGS || args.some((a) => a.length > MAX_ARG_LENGTH || CONTROL.test(a))) continue
       const kind = typeof item.kind === 'string' ? item.kind : 'item'
       entries.push({
         id: 'pl:' + appId + ':' + run.exe + ' ' + args.join(' '),
