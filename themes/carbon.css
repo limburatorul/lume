@@ -25,7 +25,7 @@
   --input-placeholder: #4a4d53;
   --search-glyph: "\203A";
   --search-glyph-size: 22px;
-  --search-glyph-color: #4c8bf5;
+  --search-glyph-color: var(--accent);
 
   --row-height: 46px;
   --row-gap: 1px;
@@ -33,7 +33,7 @@
   --row-bg-hover: #1e2024;
   --row-bg-selected: #23262c;
   --row-accent-width: 2px;
-  --row-accent-color: #4c8bf5;
+  --row-accent-color: var(--accent);
 
   --title-size: 14px;
   --title-weight: 450;

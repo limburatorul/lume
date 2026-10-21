@@ -84,6 +84,8 @@ export interface UiOverrides {
   fontFamily: string | null
   /** Replace the theme's --accent with the Windows system accent colour. */
   useWindowsAccent: boolean
+  /** A chosen `#rrggbb` accent; null keeps the theme's. Ignored while useWindowsAccent is on. */
+  accentColor: string | null
 }
 
 export type Backdrop = 'acrylic' | 'mica' | 'tabbed' | 'none'
@@ -192,4 +194,6 @@ export interface IndexStats {
   byKind: Record<string, number>
   /** Epoch millis of the last successful rebuild, or 0 if never. */
   builtAt: number
+  /** Items shared by sister apps that Lume can launch, by app id (shelf, reel, ...). */
+  sisters?: Record<string, number>
 }

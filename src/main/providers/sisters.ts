@@ -6,6 +6,9 @@ import { scoreCandidate } from '../search/fuzzy.js'
 
 interface Entry {
   id: string
+  app: string
+  /** The sharing app's own exe: Reel's films run through explorer.exe, whose folder icon says nothing. */
+  icon: string
   title: string
   subtitle: string
   detail?: string
@@ -84,6 +87,8 @@ function load(root: string): Entry[] {
       const kind = typeof item.kind === 'string' ? item.kind : 'item'
       entries.push({
         id: 'pl:' + appId + ':' + run.exe + ' ' + args.join(' '),
+        app: appId,
+        icon: card.exe,
         title: item.title,
         subtitle: card.name + ' · ' + kind,
         detail: typeof item.subtitle === 'string' && item.subtitle ? item.subtitle : undefined,
@@ -105,6 +110,13 @@ function entries(): Entry[] {
   return cache.entries
 }
 
+/** How many launchable items each sister app shares, by app id. */
+export function sisterCounts(): Record<string, number> {
+  const counts: Record<string, number> = {}
+  for (const e of entries()) counts[e.app] = (counts[e.app] ?? 0) + 1
+  return counts
+}
+
 export function sistersProvider(query: string): ResultItem[] {
   const q = query.trim()
   if (q.length < 2) return []
@@ -117,7 +129,7 @@ export function sistersProvider(query: string): ResultItem[] {
       title: e.title,
       subtitle: e.subtitle,
       detail: e.detail,
-      iconKey: e.exe,
+      iconKey: e.icon,
       glyph: GLYPHS[e.kind] ?? 'app',
       // Just under an app match of the same quality: typing "steam" should
       // still reach Steam itself before a game that happens to share a word.

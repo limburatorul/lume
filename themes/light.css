@@ -27,7 +27,7 @@
   --row-height: 50px;
   --row-radius: 9px;
   --row-bg-hover: rgba(0, 0, 0, 0.04);
-  --row-bg-selected: rgba(76, 95, 215, 0.13);
+  --row-bg-selected: color-mix(in srgb, var(--accent) 13%, transparent);
   --row-accent-width: 3px;
 
   --title-color: #1b1b1f;

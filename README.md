@@ -145,8 +145,9 @@ Save button, and everything is written straight to `config.json`.
 
 ![The settings window, Appearance section](docs/images/settings.png)
 
-- **Appearance** — theme per colour scheme, background material, opacity, window
-  width, row and icon size, fonts, corner radius, vertical position, animation.
+- **Appearance** — theme per colour scheme, accent colour (the theme's, Windows',
+  a preset or any colour), background material, opacity, window width, row and
+  icon size, fonts, corner radius, vertical position, animation.
 - **Behaviour** — hotkey, with a live badge saying whether Windows actually
   granted it; which monitor to open on; hide-on-blur; what happens to the last
   query; search delay; how strongly launch history outranks match quality.
@@ -154,8 +155,8 @@ Save button, and everything is written straight to `config.json`.
   update checks with the current status.
 - **Search** — extra folders to index, title exclusions, shell prefix and shell.
 - **Web search** — add, edit and remove engines; pick the fallback.
-- **Index & data** — index counts by kind, rebuild, forget launch history, clear
-  the icon cache, reset every setting.
+- **Index & data** — index counts by kind, games from Shelf and films from Reel,
+  rebuild, forget launch history, clear the icon cache, reset every setting.
 
 ### Opacity and blur are two different controls
 
@@ -348,7 +349,7 @@ themes/            theme stylesheets
 ```
 
 State lives in `%APPDATA%\Lume\`: `config.json`, `usage.json`, `appindex.json`,
-`iconcache/`.
+`icon-cache/`.
 
 ## More from Protagonist Labs
 

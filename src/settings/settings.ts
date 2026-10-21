@@ -150,12 +150,7 @@ const SECTIONS: Section[] = [
                   options: themeOptions,
                 },
               ] as Field[])),
-          {
-            kind: 'toggle',
-            path: 'ui.useWindowsAccent',
-            label: 'Match Windows accent colour',
-            help: 'Overrides the theme’s accent with your Windows personalization colour, and follows it live if you change it.',
-          },
+          { kind: 'custom', render: renderAccentPicker },
         ],
       },
       {
@@ -870,6 +865,49 @@ function buildCommands(f: Extract<Field, { kind: 'commands' }>) {
 
 /* ------------------------------------------------------- bespoke panels */
 
+const ACCENTS = ['#8b7cf6', '#4c8bf5', '#22b8cf', '#2fbf71', '#f5b942', '#f2803d', '#ef5a6f', '#e868c8']
+
+/** The theme's accent, the Windows one, a preset or any colour. */
+function renderAccentPicker(): HTMLElement {
+  const row = el('div', { class: 'swatches', role: 'radiogroup' })
+  const custom = config.ui.accentColor
+  const choose = (useWindowsAccent: boolean, accentColor: string | null) => {
+    write('ui.useWindowsAccent', useWindowsAccent)
+    write('ui.accentColor', accentColor)
+    renderSection()
+  }
+  const swatch = (label: string, on: boolean, pick: () => void, color?: string) => {
+    const b = el('button', { class: 'swatch' + (color ? '' : ' named'), title: label, type: 'button' })
+    b.setAttribute('role', 'radio')
+    b.setAttribute('aria-checked', String(on))
+    b.setAttribute('aria-label', label)
+    if (color) b.style.background = color
+    else b.textContent = label
+    b.addEventListener('click', pick)
+    return b
+  }
+  row.append(
+    swatch('Theme', !config.ui.useWindowsAccent && !custom, () => choose(false, null)),
+    swatch('Windows', config.ui.useWindowsAccent, () => choose(true, null)),
+    ...ACCENTS.map((c) => swatch(c, !config.ui.useWindowsAccent && custom === c, () => choose(false, c), c)),
+  )
+  const own = Boolean(custom && !ACCENTS.includes(custom) && !config.ui.useWindowsAccent)
+  const other = el('input', { type: 'color', value: custom ?? ACCENTS[0] })
+  other.setAttribute('aria-label', 'Custom colour')
+  other.addEventListener('change', () => choose(false, other.value))
+  const dot = el('span', { class: 'dot' })
+  if (own) dot.style.background = custom!
+  const label = el('label', { class: 'swatch named custom' }, dot, 'Custom…', other)
+  label.setAttribute('aria-checked', String(own))
+  row.append(label)
+  return fieldShell(
+    'Accent colour',
+    'Colours the selected row, the matched letters and the caret. “Windows” follows your personalization colour live.',
+    row,
+    true,
+  )
+}
+
 function renderIndexPanel(): HTMLElement {
   const wrap = el('div')
   const grid = el('div', { class: 'stat-grid' })
@@ -888,6 +926,13 @@ function renderIndexPanel(): HTMLElement {
     stat(String(kinds.url ?? 0), 'web links'),
     stat(stats.builtAt ? new Date(stats.builtAt).toLocaleTimeString() : '—', 'last built'),
   )
+  // Shared by the other apps and searched alongside, but not part of the app index above.
+  const shared = el(
+    'div',
+    { class: 'stat-grid shared' },
+    stat(String(stats.sisters?.shelf ?? 0), 'games from Shelf'),
+    stat(String(stats.sisters?.reel ?? 0), 'films from Reel'),
+  )
 
   const rebuild = el('button', { class: 'primary', textContent: 'Rebuild index now' })
   rebuild.addEventListener('click', () => {
@@ -900,7 +945,7 @@ function renderIndexPanel(): HTMLElement {
     })
   })
 
-  wrap.append(grid, el('div', { class: 'row-actions' }, rebuild))
+  wrap.append(grid, shared, el('div', { class: 'row-actions' }, rebuild))
   return wrap
 }
 

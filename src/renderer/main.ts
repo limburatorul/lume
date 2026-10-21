@@ -421,6 +421,8 @@ function overrideCss(cfg: Bootstrap['config'], accentColor: string | null): stri
   const ui = cfg.ui
   push('--surface-opacity', ui.surfaceOpacity)
   if (ui.useWindowsAccent) push('--accent', accentColor)
+  // config.json can be edited by hand, so only a plain colour reaches the stylesheet.
+  else if (/^#[0-9a-f]{6}$/i.test(ui.accentColor ?? '')) push('--accent', ui.accentColor)
   push('--radius', ui.cornerRadius, 'px')
   push('--row-height', ui.rowHeight, 'px')
   push('--icon-size', ui.iconSize, 'px')

@@ -1,8 +1,11 @@
 import { app, nativeImage } from 'electron'
+import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import fsp from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 /**
  * Icons are resolved lazily: query results carry only an `iconKey` (the source
@@ -16,10 +19,16 @@ const memory = new Map<string, string | null>()
 let cacheDir = ''
 const pending = new Map<string, Promise<string | null>>()
 
+const here = path.dirname(fileURLToPath(import.meta.url))
+/* Spawned as a real file, so it lives outside app.asar like uwp.ps1. */
+const SHELL_SCRIPT = path.join(here, 'shellicons.ps1').replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep)
+
 export function initIcons() {
-  // 'iconcache' holds generic glyphs cached before pngFromExe existed.
-  fs.rmSync(path.join(app.getPath('userData'), 'iconcache'), { recursive: true, force: true })
-  cacheDir = path.join(app.getPath('userData'), 'icons')
+  // Older caches hold the generic glyphs Chromium drew for shortcuts and system tools.
+  for (const old of ['iconcache', 'icons']) {
+    fs.rmSync(path.join(app.getPath('userData'), old), { recursive: true, force: true })
+  }
+  cacheDir = path.join(app.getPath('userData'), 'icon-cache')
   fs.mkdirSync(cacheDir, { recursive: true })
 }
 
@@ -99,6 +108,61 @@ async function pngFromExe(file: string): Promise<Electron.NativeImage | null> {
   }
 }
 
+let shellQueue: Array<{ file: string; done: (png: Buffer | null) => void }> = []
+let shellTimer: NodeJS.Timeout | null = null
+let shellBusy = false
+let shellRuns = 0
+
+/**
+ * Asks the Windows shell for the icon Explorer draws. It is the only reader
+ * that follows a shortcut's icon into a DLL, into the .mun files Windows 11
+ * moved its own icons to, or through a target that is not a file (Control
+ * Panel, Run, Store apps). app.getFileIcon only knows the file extension, so
+ * all of those came out as a blank page or a generic program window. Requests
+ * are batched: one PowerShell run draws every icon the visible rows need.
+ */
+function fromShell(file: string): Promise<Buffer | null> {
+  return new Promise((done) => {
+    shellQueue.push({ file, done })
+    scheduleShell()
+  })
+}
+
+function scheduleShell() {
+  if (!shellBusy && !shellTimer && shellQueue.length) shellTimer = setTimeout(() => void runShell(), 30)
+}
+
+async function runShell() {
+  shellTimer = null
+  const batch = shellQueue
+  shellQueue = []
+  shellBusy = true
+  const results: (Buffer | null)[] = batch.map(() => null)
+  const list = path.join(os.tmpdir(), 'lume-icons-' + process.pid + '-' + ++shellRuns + '.txt')
+  try {
+    await fsp.writeFile(list, batch.map((b) => b.file).join('\n'), 'utf8')
+    const stdout = await new Promise<string>((resolve) => {
+      execFile(
+        'powershell.exe',
+        ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', SHELL_SCRIPT, '-List', list],
+        { timeout: 30_000, maxBuffer: 64 * 1024 * 1024, windowsHide: true },
+        (err, out) => {
+          if (err && !out) console.error('[icons] shell icons failed:', err.message)
+          resolve(out ?? '')
+        },
+      )
+    })
+    for (const m of stdout.matchAll(/^LUME:(\d+):(\S+)/gm)) results[Number(m[1])] = Buffer.from(m[2], 'base64')
+  } catch (err) {
+    console.error('[icons] shell icons failed:', err)
+  } finally {
+    batch.forEach((b, i) => b.done(results[i]))
+    fsp.rm(list, { force: true }).catch(() => {})
+    shellBusy = false
+    scheduleShell()
+  }
+}
+
 async function fromFile(file: string): Promise<Electron.NativeImage | null> {
   const ext = path.extname(file).toLowerCase()
 
@@ -121,13 +185,9 @@ async function fromFile(file: string): Promise<Electron.NativeImage | null> {
     }
   }
 
-  // .lnk / .exe: ask the shell for the icon Explorer would draw.
-  try {
-    const img = await app.getFileIcon(file, { size: 'large' })
-    return img.isEmpty() ? null : img
-  } catch {
-    return null
-  }
+  const png = await fromShell(file)
+  const img = png && nativeImage.createFromBuffer(png)
+  return img && !img.isEmpty() ? img : null
 }
 
 async function extract(key: string): Promise<string | null> {
@@ -141,9 +201,16 @@ async function extract(key: string): Promise<string | null> {
 
   let image: Electron.NativeImage | null = null
   // `key` may list several candidates, best first (e.g. "target.exe|link.lnk").
-  for (const candidate of key.split('|')) {
+  // A network path would be opened just to draw an icon, handing out the user's credentials.
+  const candidates = key.split('|').filter((c) => !/^[\\/]{2}/.test(c))
+  for (const candidate of candidates) {
     image = await fromFile(candidate)
     if (image) break
+  }
+  // Nothing drew it, or PowerShell is unavailable: the extension's icon is still better than none.
+  if (!image && candidates.length) {
+    image = await app.getFileIcon(candidates[0], { size: 'large' }).catch(() => null)
+    if (image?.isEmpty()) image = null
   }
 
   if (!image) return null

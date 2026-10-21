@@ -18,6 +18,7 @@ import { seeWhoHolds, toHotkeyScanCombo, worksWith, writeCard } from './ecosyste
 import { execute } from './executor.js'
 import { clearIconCache, getIcon, initIcons } from './icons.js'
 import { appIndex } from './indexer/apps.js'
+import { sisterCounts } from './providers/sisters.js'
 import { search } from './search/engine.js'
 import { settings } from './settings.js'
 import { notifySettings, openSettings, settingsWindow } from './settingsWindow.js'
@@ -286,12 +287,13 @@ function registerIpc() {
     return result.canceled ? null : result.filePaths[0]
   })
 
+  const indexStats = () => ({ ...appIndex.stats(), sisters: sisterCounts() })
   ipcMain.handle('settings:rebuildIndex', async () => {
     await appIndex.rebuild()
-    return appIndex.stats()
+    return indexStats()
   })
 
-  ipcMain.handle('settings:indexStats', () => appIndex.stats())
+  ipcMain.handle('settings:indexStats', indexStats)
   ipcMain.handle('settings:clearUsage', () => usage.clear())
   ipcMain.handle('settings:clearIconCache', () => clearIconCache())
 

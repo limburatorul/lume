@@ -471,6 +471,10 @@ table.engines input {
   flex-wrap: wrap;
 }
 
+.stat-grid.shared {
+  border-top: 1px solid var(--border);
+}
+
 .stat {
   display: flex;
   flex-direction: column;
@@ -488,6 +492,64 @@ table.engines input {
   color: var(--text-faint);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  outline: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.swatch.named {
+  width: auto;
+  padding: 0 12px;
+  border-radius: 14px;
+  background: var(--field-bg, transparent);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.swatch[aria-checked="true"] {
+  border-color: var(--bg);
+  outline: 2px solid var(--text);
+}
+
+.swatch.custom {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 24px;
+}
+
+.swatch.custom .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: conic-gradient(#ef5a6f, #f5b942, #2fbf71, #22b8cf, #8b7cf6, #e868c8, #ef5a6f);
+}
+
+.swatch.custom:focus-within {
+  outline: 2px solid var(--accent);
+}
+
+/* The native picker opens from the whole chip; the input itself stays invisible. */
+.swatch.custom input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .about p {

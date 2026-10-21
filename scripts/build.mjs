@@ -70,6 +70,7 @@ async function copyStatic() {
   await cp('src/settings/index.html', 'dist/settings/index.html')
   await cp('src/settings/settings.css', 'dist/settings/settings.css')
   await cp('src/main/indexer/uwp.ps1', 'dist/main/uwp.ps1')
+  await cp('src/main/shellicons.ps1', 'dist/main/shellicons.ps1')
   await cp('themes', 'dist/themes', { recursive: true })
   await cp('assets', 'dist/assets', { recursive: true })
 }

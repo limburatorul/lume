@@ -75,6 +75,26 @@ function keywordsFor(name: string, target?: string): string[] {
   return [...out]
 }
 
+const expandEnv = (p: string) => p.replace(/%([^%]+)%/g, (whole, name) => process.env[name] ?? whole)
+
+/**
+ * Where a shortcut's icon comes from, best first. Its own .ico beats its
+ * target: Chrome web apps, script launchers and GOG games all point at a host
+ * exe with someone else's icon. A shortcut with no file target (Control Panel,
+ * Run) or whose icon sits in a DLL (system tools, rundll32 launchers) is drawn
+ * from the shortcut itself, which only the shell can do.
+ */
+function iconSources(file: string, target: string, icon: string): string {
+  const location = expandEnv(icon)
+  const ownIco = /\.ico$/i.test(location) && fs.existsSync(location) ? location : ''
+  const elsewhere =
+    location !== '' && !ownIco && fs.existsSync(location) && path.resolve(location).toLowerCase() !== path.resolve(target || file).toLowerCase()
+  // The shell cannot draw every shortcut (File Explorer's points at a folder
+  // object); its icon file is then the next best thing when it is a program.
+  const program = elsewhere && /\.exe$/i.test(location) ? location : ''
+  return [ownIco, target && !elsewhere ? target : '', file, program].filter(Boolean).join('|')
+}
+
 async function walk(dir: string, depth = 0, acc: string[] = []): Promise<string[]> {
   if (depth > MAX_DEPTH) return acc
   let entries: fs.Dirent[]
@@ -215,9 +235,7 @@ class AppIndex extends EventEmitter {
           kind: 'lnk',
           launch: file,
           exePath: target || undefined,
-          // A shortcut's own .ico beats its target: Chrome web apps, script
-          // launchers and GOG games all point at a host exe with someone else's icon.
-          iconPath: [/\.ico$/i.test(icon) && fs.existsSync(icon) ? icon : '', target, file].filter(Boolean).join('|'),
+          iconPath: iconSources(file, target, icon),
           // Just the shortcut's own words; the path is shown separately, and
           // only on the row you are about to launch.
           subtitle: description?.trim() ?? '',
@@ -280,7 +298,8 @@ class AppIndex extends EventEmitter {
           keywords: keywordsFor(a.Name),
           kind: 'uwp' as const,
           launch: a.AppID,
-          iconPath: a.Logo ?? undefined,
+          // Games installed through the Xbox app often have no logo the script can find.
+          iconPath: [a.Logo, 'shell:AppsFolder\\' + a.AppID].filter(Boolean).join('|'),
           subtitle: 'Store app',
         }))
     } catch (err) {
