@@ -59,16 +59,26 @@ const configs = [
     target: 'chrome128',
     format: 'iife',
   },
+  {
+    ...shared,
+    entryPoints: ['src/whatsnew/whatsnew.ts'],
+    outfile: 'dist/whatsnew/whatsnew.js',
+    platform: 'browser',
+    target: 'chrome128',
+    format: 'iife',
+  },
 ]
 
 async function copyStatic() {
   await mkdir('dist/renderer', { recursive: true })
   await mkdir('dist/settings', { recursive: true })
+  await mkdir('dist/whatsnew', { recursive: true })
   await mkdir('dist/main', { recursive: true })
   await cp('src/renderer/index.html', 'dist/renderer/index.html')
   await cp('src/renderer/base.css', 'dist/renderer/base.css')
   await cp('src/settings/index.html', 'dist/settings/index.html')
   await cp('src/settings/settings.css', 'dist/settings/settings.css')
+  await cp('src/whatsnew/index.html', 'dist/whatsnew/index.html')
   await cp('src/main/indexer/uwp.ps1', 'dist/main/uwp.ps1')
   await cp('src/main/shellicons.ps1', 'dist/main/shellicons.ps1')
   await cp('themes', 'dist/themes', { recursive: true })
@@ -83,7 +93,7 @@ if (watch) {
   await copyStatic()
   // Static assets are small; poll-copy them so edits land without a restart.
   const { watch: fsWatch } = await import('node:fs')
-  for (const dir of ['src/renderer', 'src/settings', 'themes']) {
+  for (const dir of ['src/renderer', 'src/settings', 'src/whatsnew', 'themes']) {
     fsWatch(dir, { recursive: true }, () => copyStatic().catch(() => {}))
   }
   console.log('[build] watching…')

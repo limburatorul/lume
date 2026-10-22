@@ -7,6 +7,7 @@ import { usage } from '../src/main/store.js'
 import { evaluate } from '../src/main/providers/calculator.js'
 import { sistersProvider } from '../src/main/providers/sisters.js'
 import { seeWhoHolds, toHotkeyScanCombo, worksWith, writeCard } from '../src/main/ecosystem.js'
+import { CHANGELOG } from '../src/whatsnew/changelog.js'
 
 const APPS = [
   'PyCharm Community Edition 2024.1', 'Cheat Engine 7.5', 'Arduino IDE', 'AIDA64 Extreme',
@@ -253,6 +254,21 @@ console.log('\n--- sister apps ---')
     console.log((ok ? 'ok  ' : 'FAIL') + '  ' + label)
   }
   rmSync(root, { recursive: true, force: true })
+}
+
+// What's new: newest first, real dates, and the version being built has its notes.
+{
+  const num = (v: string) => v.split('.').map(Number).reduce((a, n) => a * 1000 + n, 0)
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
+  const checks: Array<[string, boolean]> = [
+    ["what's new: newest first", CHANGELOG.every((e, i) => i === 0 || num(CHANGELOG[i - 1].version) > num(e.version))],
+    ["what's new: every date is a day", CHANGELOG.every((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.date) && !isNaN(Date.parse(e.date)))],
+    ["what's new: this version has its notes", CHANGELOG[0].version === pkg.version],
+  ]
+  for (const [label, ok] of checks) {
+    if (!ok) failures++
+    console.log((ok ? 'ok  ' : 'FAIL') + '  ' + label)
+  }
 }
 
 console.log('\nfailures:', failures)

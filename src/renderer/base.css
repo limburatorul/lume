@@ -196,9 +196,23 @@ html[data-animate="false"] .lume {
 
 /* ---------- results ---------- */
 
+/* The window stops growing at 900px (window.ts): past that the results scroll, so the action menu
+   under them stays inside the window instead of being cut off below it. */
+.lume {
+  max-height: 900px;
+}
+
 .results-wrap {
+  flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.search,
+.context {
+  flex: none;
 }
 
 .results-wrap.empty {

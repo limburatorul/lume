@@ -286,6 +286,8 @@ function openContext() {
   contextSelected = 0
   el.context.hidden = false
   renderContext()
+  // A long list gives up room to the menu: keep the row the menu is for in sight.
+  requestAnimationFrame(() => el.list.children[selected]?.scrollIntoView({ block: 'nearest' }))
 }
 
 function closeContext() {

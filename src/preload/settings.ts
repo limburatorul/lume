@@ -22,6 +22,7 @@ const api = {
   openSisterPage: (url: string): Promise<void> => ipcRenderer.invoke('settings:openSisterPage', url),
   previewLauncher: (): Promise<void> => ipcRenderer.invoke('settings:preview'),
   appVersion: (): Promise<string> => ipcRenderer.invoke('settings:version'),
+  whatsNew: (): Promise<void> => ipcRenderer.invoke('settings:whatsNew'),
 
   updateStatus: (): Promise<UpdateStatus> => ipcRenderer.invoke('settings:updateStatus'),
   checkForUpdates: (): Promise<UpdateStatus> => ipcRenderer.invoke('settings:checkForUpdates'),

@@ -11,6 +11,7 @@ import {
   systemPreferences,
   Tray,
 } from 'electron'
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Bootstrap, Config, ResultItem } from '../shared/types.js'
@@ -21,7 +22,7 @@ import { appIndex } from './indexer/apps.js'
 import { sisterCounts } from './providers/sisters.js'
 import { search } from './search/engine.js'
 import { settings } from './settings.js'
-import { notifySettings, openSettings, settingsWindow } from './settingsWindow.js'
+import { notifySettings, openSettings, openWhatsNew, settingsWindow } from './settingsWindow.js'
 import { usage } from './store.js'
 import { themes } from './themes.js'
 import { updater } from './updater.js'
@@ -143,6 +144,7 @@ function setTrayMenu() {
       { label: 'Rebuild app index', click: () => void appIndex.rebuild() },
       { type: 'separator' },
       { label: 'Settings…', click: () => openSettings() },
+      { label: 'What’s new', click: () => openWhatsNew() },
       { label: 'Open themes folder', click: () => void shell.openPath(themes.dir) },
       { label: 'Developer tools', click: () => launcherWindow.toggleDevTools() },
       pending
@@ -310,6 +312,7 @@ function registerIpc() {
   })
 
   ipcMain.handle('settings:preview', () => launcherWindow.show())
+  ipcMain.handle('settings:whatsNew', () => openWhatsNew())
   ipcMain.handle('settings:version', () => app.getVersion())
 
   ipcMain.handle('settings:updateStatus', () => updater.current)
@@ -354,6 +357,32 @@ function wireEvents() {
   })
 }
 
+/**
+ * What's new, once after an update. The version last seen lives in its own
+ * file beside config.json; a profile without one but with a config written
+ * before this start is an update from before 0.4.1, and a fresh install has
+ * nothing new to tell.
+ */
+function whatsNewAfterUpdate(hadConfig: boolean) {
+  const file = path.join(app.getPath('userData'), 'last-seen-version')
+  let seen = ''
+  try {
+    seen = fs.readFileSync(file, 'utf8').trim()
+  } catch {
+    // No file yet: hadConfig decides below.
+  }
+  const current = app.getVersion()
+  if (seen === current) return
+  try {
+    fs.writeFileSync(file, current, 'utf8')
+  } catch (err) {
+    // An unwritable profile would show the window on every start; skip it instead.
+    console.error('[whatsnew] could not record the version:', err)
+    return
+  }
+  if (seen || hadConfig) openWhatsNew()
+}
+
 /* ------------------------------------------------------------- lifecycle */
 
 if (!app.requestSingleInstanceLock()) {
@@ -372,6 +401,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(async () => {
     app.setAppUserModelId('dev.tucu.lume')
+    const hadConfig = fs.existsSync(path.join(app.getPath('userData'), 'config.json'))
     settings.init()
     themes.init()
     usage.init(app.getPath('userData'))
@@ -387,6 +417,7 @@ if (!app.requestSingleInstanceLock()) {
     await appIndex.init()
     applyStartupSetting()
     updater.init()
+    whatsNewAfterUpdate(hadConfig)
 
     if (process.argv.includes('--settings')) {
       openSettings()

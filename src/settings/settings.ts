@@ -511,6 +511,7 @@ const SECTIONS: Section[] = [
     title: 'About Lume',
     blurb: '',
     groups: () => [
+      { title: 'What’s new', fields: [{ kind: 'custom', render: renderWhatsNew }] },
       { title: 'Keys', fields: [{ kind: 'custom', render: renderAbout }] },
       { title: 'Works with', fields: [{ kind: 'custom', render: renderWorksWith }] },
     ],
@@ -1057,6 +1058,19 @@ function renderDataPanel(): HTMLElement {
 
   wrap.append(usage, icons, reset)
   return wrap
+}
+
+function renderWhatsNew(): HTMLElement {
+  const line = el('div', { class: 'field' })
+  const info = el('div')
+  info.append(
+    el('div', { class: 'field-label', textContent: 'Version ' + appVersion }),
+    el('div', { class: 'field-help', textContent: 'Every release, month by month. Also in the tray menu.' }),
+  )
+  const open = el('button', { class: 'ghost', textContent: 'What’s new' })
+  open.addEventListener('click', () => void api.whatsNew())
+  line.append(info, el('div', { class: 'field-control' }, open))
+  return line
 }
 
 function renderAbout(): HTMLElement {

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';"
+    />
+    <title>What’s new — Lume</title>
+    <!-- The settings window's colours, title strip and buttons, so both windows look alike. -->
+    <link rel="stylesheet" href="../settings/settings.css" />
+    <style>
+      .layout {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        grid-template-rows: 1fr auto;
+        gap: 0 16px;
+        height: calc(100% - 44px);
+        padding: 16px 18px 14px;
+      }
+      nav {
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+      .month {
+        color: var(--text-faint);
+        font-size: 11.5px;
+        margin: 12px 8px 4px;
+      }
+      .month:first-child {
+        margin-top: 0;
+      }
+      nav button {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin: 1px 0;
+        padding: 7px 8px;
+        border: 0;
+        border-radius: 7px;
+        background: none;
+        color: var(--text);
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      nav button:hover {
+        background: var(--row-hover);
+      }
+      nav button.active {
+        background: color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      nav .meta {
+        color: var(--text-faint);
+        font-size: 11.5px;
+      }
+      main {
+        overflow-y: auto;
+        scrollbar-width: thin;
+        padding-right: 8px;
+      }
+      /* 960 x 170 in every app, so a picture made at that size fits exactly; a narrower window shrinks it. */
+      .banner {
+        position: relative;
+        width: 100%;
+        max-width: 960px;
+        aspect-ratio: 960 / 170;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 14px;
+      }
+      .banner img,
+      .banner svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .banner-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: 26px;
+        max-width: 60%;
+        color: #fff;
+      }
+      .kicker {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+      .version {
+        font-size: 34px;
+        font-weight: 600;
+        line-height: 1.15;
+      }
+      .title {
+        font-size: 14px;
+        opacity: 0.9;
+      }
+      .entry {
+        margin-bottom: 16px;
+      }
+      .entry-version {
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .entry-date {
+        color: var(--text-faint);
+        font-weight: 400;
+        font-size: 12.5px;
+        margin-left: 10px;
+      }
+      .entry ul {
+        list-style: none;
+      }
+      .entry li {
+        position: relative;
+        padding-left: 18px;
+        margin: 5px 0;
+        line-height: 1.5;
+        color: var(--text-dim);
+      }
+      .entry li::before {
+        content: '•';
+        position: absolute;
+        left: 3px;
+        color: var(--accent);
+      }
+      .entry li strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .actions {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="titlebar">What’s new — Lume</div>
+    <div class="layout">
+      <nav id="nav" aria-label="Releases"></nav>
+      <main id="release"></main>
+      <div class="actions"><button class="primary" id="close">Close</button></div>
+    </div>
+    <script src="whatsnew.js"></script>
+  </body>
+</html>
