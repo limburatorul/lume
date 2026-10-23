@@ -8,6 +8,9 @@ import { evaluate } from '../src/main/providers/calculator.js'
 import { sistersProvider } from '../src/main/providers/sisters.js'
 import { seeWhoHolds, toHotkeyScanCombo, worksWith, writeCard } from '../src/main/ecosystem.js'
 import { CHANGELOG } from '../src/whatsnew/changelog.js'
+import { moveDataFolder } from '../src/main/datafolder.js'
+import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 
 const APPS = [
   'PyCharm Community Edition 2024.1', 'Cheat Engine 7.5', 'Arduino IDE', 'AIDA64 Extreme',
@@ -238,16 +241,60 @@ console.log('\n--- sister apps ---')
   checks.push(['works with: offer links carry the code', offer.every((o) => o.url.includes('?code=SECOND30&utm_source=lume'))])
 
   // Two writes back to back, as at start followed at once by a new hotkey: the last one must win.
-  void writeCard('0.3.0', exe, [{ combo: toHotkeyScanCombo('Alt+Space'), does: 'Show or hide Lume', registered: false }])
-  await writeCard('0.3.0', exe, [{ combo: toHotkeyScanCombo('CommandOrControl+Shift+K'), does: 'Show or hide Lume', registered: true }])
+  void writeCard('0.3.0', exe, root, [{ combo: toHotkeyScanCombo('Alt+Space'), does: 'Show or hide Lume', registered: false }])
+  await writeCard('0.3.0', exe, path.join(root, 'Lume'), [{ combo: toHotkeyScanCombo('CommandOrControl+Shift+K'), does: 'Show or hide Lume', registered: true }])
   const own = JSON.parse(readFileSync(path.join(shared, 'apps', 'lume.json'), 'utf8'))
   checks.push(['card declares the hotkey in HotkeyScan notation', JSON.stringify(own.hotkeys) === '[{"combo":"Ctrl+Shift+K","does":"Show or hide Lume","registered":true}]' && own.schema === 1 && own.id === 'lume'])
+  checks.push(['card names the data folder', own.data === path.join(root, 'Lume')])
 
   process.env.APPDATA = path.join(root, 'nowhere')
   checks.push(['no shared folder: no results', sistersProvider('witcher').length === 0])
   checks.push(['no HotkeyScan: its page', 'url' in seeWhoHolds('Alt+Space')])
   checks.push(['works with: at most three missing, most useful first', worksWith().lines.map((l) => l.name).join(',') === 'Shelf,File Labs,HotkeyScan'])
   checks.push(['works with: nothing bought, no offer', worksWith().offer.length === 0])
+
+  for (const [label, ok] of checks) {
+    if (!ok) failures++
+    console.log((ok ? 'ok  ' : 'FAIL') + '  ' + label)
+  }
+  rmSync(root, { recursive: true, force: true })
+}
+
+/* ------------------------------------------------- data folder move */
+
+console.log('\n--- data folder ---')
+{
+  const root = mkdtempSync(path.join(os.tmpdir(), 'lume-data-'))
+  const from = path.join(root, 'Lume')
+  const to = path.join(root, 'ProtagonistLabs', 'Lume')
+  const fill = (dir: string, name: string) => {
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(path.join(dir, name), name)
+  }
+  const checks: Array<[string, boolean]> = []
+
+  fill(from, 'config.json')
+  const used = moveDataFolder(from, to)
+  checks.push(['data: moved whole, old folder gone', used === to && existsSync(path.join(to, 'config.json')) && !existsSync(from)])
+  checks.push(['data: second start changes nothing', moveDataFolder(from, to) === to && existsSync(path.join(to, 'config.json'))])
+
+  fill(from, 'usage.json')
+  checks.push(['data: new folder has data, nothing mixed', moveDataFolder(from, to) === to && existsSync(path.join(from, 'usage.json')) && !existsSync(path.join(to, 'usage.json'))])
+
+  rmSync(to, { recursive: true })
+  mkdirSync(to)
+  checks.push(['data: an empty new folder counts as not there', moveDataFolder(from, to) === to && existsSync(path.join(to, 'usage.json')) && !existsSync(from)])
+
+  // A file held open without sharing, as a running copy would: the rename fails, nothing is copied.
+  rmSync(to, { recursive: true })
+  fill(from, 'locked.json')
+  const holder = spawn('powershell.exe', ['-NoProfile', '-Command',
+    `$f = [IO.File]::Open('${path.join(from, 'locked.json')}', 'Open', 'Read', 'None'); 'held'; Start-Sleep 20`])
+  await new Promise((resolve) => holder.stdout.once('data', resolve))
+  checks.push(['data: locked file, old folder used this time, nothing copied', moveDataFolder(from, to) === from && existsSync(path.join(from, 'locked.json')) && !existsSync(to)])
+  holder.kill()
+  await new Promise((resolve) => holder.once('exit', resolve))
+  checks.push(['data: next start moves it', moveDataFolder(from, to) === to && existsSync(path.join(to, 'locked.json'))])
 
   for (const [label, ok] of checks) {
     if (!ok) failures++

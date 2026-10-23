@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 // a new x.y.0 also gets a title for its What's new banner.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.0',
+    date: '2026-10-23',
+    title: 'One home for Lume, beside our other apps',
+    changes: [
+      'Lume now installs for everyone on this PC, in **Program Files\\ProtagonistLabs\\Lume**, next to our other apps. Windows asks for permission when you install and when you update.',
+      'Your settings, themes and history move by themselves to **%APPDATA%\\ProtagonistLabs\\Lume**, in one go when you install this version. Nothing is copied twice and nothing is lost.',
+      'The old copy in your user folder is removed, with its shortcuts; the new ones are in the Start menu for everyone.',
+      'Updates install when you choose **Restart and install**. If you say no to Windows, Lume keeps running and tells you the update waits.',
+      'What’s new now counts as read when you close it, so notes you never saw come back next time.',
+    ],
+  },
+  {
     version: '0.4.1',
     date: '2026-10-22',
     changes: [

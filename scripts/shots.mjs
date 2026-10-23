@@ -24,7 +24,7 @@ import os from 'node:os'
 const PORT = 9350
 const OUT = 'docs/images'
 const ELECTRON = path.join('node_modules', 'electron', 'dist', 'electron.exe')
-const CONFIG = path.join(os.homedir(), 'AppData', 'Roaming', 'Lume', 'config.json')
+const CONFIG = path.join(os.homedir(), 'AppData', 'Roaming', 'ProtagonistLabs', 'Lume', 'config.json')
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -260,6 +260,8 @@ writeFileSync(
   path.join(backdropDir, 'main.cjs'),
   [
     "const { app, BrowserWindow } = require('electron')",
+    // Its Chromium profile stays in the temp folder, not in %APPDATA%\lume-backdrop.
+    "app.setPath('userData', require('node:path').join(__dirname, 'profile'))",
     'app.whenReady().then(() => {',
     '  const w = new BrowserWindow({ fullscreen: true, frame: false, skipTaskbar: true })',
     // Above other topmost popups, but below the launcher's screen-saver level.

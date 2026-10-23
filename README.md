@@ -19,10 +19,12 @@ custom properties — save it and the running launcher restyles itself instantly
 
 Download from [the latest release](https://github.com/limburatorul/lume/releases/latest).
 
-- `Lume-<version>-x64.exe` — per-user install, so no admin prompt. Adds
-  Start-menu and desktop shortcuts, and can start with Windows.
+- `Lume-<version>-x64.exe` — installs for every user in
+  `C:\Program Files\ProtagonistLabs\Lume`, so Windows asks for administrator
+  rights at install and at each update. Adds Start-menu and desktop shortcuts,
+  and can start with Windows.
 - `Lume-<version>-portable.exe` — self-extracting, nothing installed. Settings
-  still live in `%APPDATA%\Lume`.
+  still live in `%APPDATA%\ProtagonistLabs\Lume`.
 
 Each release lists SHA256 checksums for both files.
 
@@ -187,7 +189,7 @@ The window is kept non-resizable through `resizable: false`.
 ## Theming
 
 Themes live in `themes/*.css` when running from source, and in
-`%APPDATA%\Lume\themes\` once installed. Select one in the settings window, or
+`%APPDATA%\ProtagonistLabs\Lume\themes\` once installed. Select one in the settings window, or
 with `"theme"` in `config.json`.
 
 Settings that override a theme are applied as a second stylesheet after it, so
@@ -234,7 +236,7 @@ live before writing the change into the file.
 
 ## Configuration file
 
-Everything in the settings window is stored in `%APPDATA%\Lume\config.json`,
+Everything in the settings window is stored in `%APPDATA%\ProtagonistLabs\Lume\config.json`,
 which is watched — edit it by hand and the running app picks the change up.
 
 | Key | Meaning |
@@ -282,7 +284,7 @@ builds has something to hand over to:
 
 | Build | Behaviour |
 | --- | --- |
-| Installer | Downloads the new version in the background, verifies its SHA512 against `latest.yml`, and applies it the next time Lume restarts. **Restart now** in settings does it immediately. |
+| Installer | Downloads the new version in the background, verifies its SHA512 against `latest.yml`, and installs it when you choose **Restart and install** (Windows asks for administrator rights: Lume installs for every user in `Program Files\ProtagonistLabs\Lume`). |
 | Portable | Tells you a newer version exists and links to its release page. A single executable has no installer to invoke, so replacing it stays your call. |
 
 Running from source behaves like the portable build: it reports what is
@@ -348,7 +350,7 @@ src/settings/      the settings UI, built from a field schema
 themes/            theme stylesheets
 ```
 
-State lives in `%APPDATA%\Lume\`: `config.json`, `usage.json`, `appindex.json`,
+State lives in `%APPDATA%\ProtagonistLabs\Lume\` (until 0.4, `%APPDATA%\Lume\`; the installer or the first start moves it): `config.json`, `usage.json`, `appindex.json`,
 `icon-cache/`.
 
 ## More from Protagonist Labs

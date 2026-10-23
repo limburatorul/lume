@@ -69,7 +69,7 @@ export interface DeclaredHotkey {
  * Written atomically and off the start path; a failure only costs the sisters a stale card.
  * hotkeys lets HotkeyScan name Lume as the holder of a combination and see whether it got it.
  */
-export function writeCard(version: string, exe: string, hotkeys: DeclaredHotkey[]): Promise<void> {
+export function writeCard(version: string, exe: string, data: string, hotkeys: DeclaredHotkey[]): Promise<void> {
   const dir = path.join(sharedRoot(), 'apps')
   const file = path.join(dir, 'lume.json')
   const card = {
@@ -79,6 +79,7 @@ export function writeCard(version: string, exe: string, hotkeys: DeclaredHotkey[
     name: 'Lume',
     version,
     exe,
+    data,
     edition: 'free',
     paid: false,
     page: 'https://protagonistlabs.app/lume/',

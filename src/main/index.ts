@@ -15,6 +15,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Bootstrap, Config, ResultItem } from '../shared/types.js'
+import { moveDataFolder } from './datafolder.js'
 import { seeWhoHolds, toHotkeyScanCombo, worksWith, writeCard } from './ecosystem.js'
 import { execute } from './executor.js'
 import { clearIconCache, getIcon, initIcons } from './icons.js'
@@ -38,6 +39,11 @@ const TRAY_ICON = path.resolve(here, '..', 'assets', 'tray.png')
  * 110ms rise instead, which is the motion the themes actually control.
  */
 app.commandLine.appendSwitch('wm-window-animations-disabled')
+
+// Before anything reads userData, the single-instance lock included. A run from
+// source uses the new folder but never moves the real one.
+const dataDir = path.join(app.getPath('appData'), 'ProtagonistLabs', 'Lume')
+app.setPath('userData', app.isPackaged ? moveDataFolder(path.join(app.getPath('appData'), 'Lume'), dataDir) : dataDir)
 
 let tray: Tray | null = null
 let registeredHotkey = ''
@@ -102,7 +108,7 @@ function publishCard(hotkey: string, registered: boolean) {
   if (state === publishedHotkey) return
   publishedHotkey = state
   const hotkeys = hotkey ? [{ combo: toHotkeyScanCombo(hotkey), does: 'Show or hide Lume', registered }] : []
-  writeCard(app.getVersion(), process.execPath, hotkeys)
+  writeCard(app.getVersion(), process.execPath, app.getPath('userData'), hotkeys)
 }
 
 /** Opens HotkeyScan on the taken combination, or its page when it is not installed. */
@@ -174,7 +180,7 @@ function offerUpdate(version: string | undefined) {
   if (!Notification.isSupported()) return
   const note = new Notification({
     title: 'Lume ' + version + ' is ready',
-    body: 'Click to restart and install it. Otherwise it installs the next time Lume quits.',
+    body: 'Click to restart and install it. Windows asks for permission first.',
   })
   note.on('click', () => updater.install())
   note.show()
@@ -373,14 +379,16 @@ function whatsNewAfterUpdate(hadConfig: boolean) {
   }
   const current = app.getVersion()
   if (seen === current) return
-  try {
-    fs.writeFileSync(file, current, 'utf8')
-  } catch (err) {
-    // An unwritable profile would show the window on every start; skip it instead.
-    console.error('[whatsnew] could not record the version:', err)
-    return
+  // Seen once it is closed, not when it opens: notes that never reached the screen come back next start.
+  const markSeen = () => {
+    try {
+      fs.writeFileSync(file, current, 'utf8')
+    } catch (err) {
+      console.error('[whatsnew] could not record the version:', err)
+    }
   }
-  if (seen || hadConfig) openWhatsNew()
+  if (seen || hadConfig) openWhatsNew(markSeen)
+  else markSeen()
 }
 
 /* ------------------------------------------------------------- lifecycle */

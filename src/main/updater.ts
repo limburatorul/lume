@@ -1,5 +1,6 @@
-import { app, shell } from 'electron'
+import { app, Notification, shell } from 'electron'
 import electronUpdater from 'electron-updater'
+import { execFile } from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import type { UpdateStatus } from '../shared/types.js'
 import pkg from '../../package.json' with { type: 'json' }
@@ -43,6 +44,7 @@ class Updater extends EventEmitter {
   private status: UpdateStatus = { state: 'idle' }
   private timer: NodeJS.Timeout | null = null
   private wired = false
+  private installer = ''
 
   get current(): UpdateStatus {
     return this.status
@@ -62,7 +64,9 @@ class Updater extends EventEmitter {
   init() {
     if (this.canInstall()) {
       autoUpdater.autoDownload = true
-      autoUpdater.autoInstallOnAppQuit = true
+      // The installer is per-machine and asks for administrator rights: never at a quit or a logoff
+      // nobody is watching, only from Restart and install.
+      autoUpdater.autoInstallOnAppQuit = false
       // The app is not code-signed, so there is no publisher signature to
       // check. Integrity still rests on the SHA512 recorded in latest.yml,
       // which electron-updater verifies before staging the installer.
@@ -82,7 +86,10 @@ class Updater extends EventEmitter {
     autoUpdater.on('download-progress', (p) =>
       this.set({ state: 'downloading', percent: Math.round(p.percent) }),
     )
-    autoUpdater.on('update-downloaded', (info) => this.set({ state: 'ready', version: info.version }))
+    autoUpdater.on('update-downloaded', (info) => {
+      this.installer = info.downloadedFile
+      this.set({ state: 'ready', version: info.version })
+    })
     autoUpdater.on('error', (err) => this.set({ state: 'error', message: err?.message ?? String(err) }))
   }
 
@@ -137,10 +144,33 @@ class Updater extends EventEmitter {
     return this.status
   }
 
-  /** Quits and runs the downloaded installer. Only valid in the 'ready' state. */
+  /**
+   * Runs the downloaded installer and quits. Only valid in the 'ready' state.
+   * The installer is per-machine, so it goes through ShellExecute and Windows
+   * asks for administrator rights (a plain spawn fails with error 740); it
+   * installs silently and starts Lume again. A refused prompt leaves Lume
+   * running and says so.
+   */
   install(): boolean {
     if (this.status.state !== 'ready') return false
-    setImmediate(() => autoUpdater.quitAndInstall(false, true))
+    const version = this.status.version
+    execFile(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        "try { Start-Process -FilePath $env:LUME_SETUP -ArgumentList '--updated','/S','--force-run' -Verb RunAs; exit 0 } catch { exit 1 }",
+      ],
+      { env: { ...process.env, LUME_SETUP: this.installer }, windowsHide: true },
+      (err) => {
+        if (!err) return app.quit()
+        new Notification({
+          title: 'Update not installed',
+          body: `Windows did not get permission to install Lume ${version}. Lume keeps running; install it later from the tray.`,
+        }).show()
+      },
+    )
     return true
   }
 

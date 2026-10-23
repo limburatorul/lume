@@ -75,7 +75,7 @@ let whatsNew: BrowserWindow | null = null
  * and a 960 x 170 banner at full size. The notes are bundled into the page,
  * so it needs no bridge: only the running version, to open on its release.
  */
-export function openWhatsNew() {
+export function openWhatsNew(onClosed?: () => void) {
   if (whatsNew && !whatsNew.isDestroyed()) {
     if (whatsNew.isMinimized()) whatsNew.restore()
     whatsNew.show()
@@ -100,7 +100,10 @@ export function openWhatsNew() {
 
   whatsNew.setMenu(null)
   whatsNew.webContents.once('did-finish-load', () => whatsNew?.show())
-  whatsNew.on('closed', () => (whatsNew = null))
+  whatsNew.on('closed', () => {
+    whatsNew = null
+    onClosed?.()
+  })
   whatsNew.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   void whatsNew.loadFile(WHATS_NEW, { query: { v: app.getVersion() } })
 }
