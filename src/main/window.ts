@@ -1,4 +1,4 @@
-import { BrowserWindow, screen } from 'electron'
+import { app, BrowserWindow, screen } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { settings } from './settings.js'
@@ -8,6 +8,10 @@ const RENDERER = path.resolve(here, '..', 'renderer', 'index.html')
 const PRELOAD = path.resolve(here, '..', 'preload', 'index.cjs')
 
 const INITIAL_HEIGHT = 64
+
+// Set as the app quits, so only then does the launcher's window really close.
+let quitting = false
+app.on('before-quit', () => (quitting = true))
 
 export class LauncherWindow {
   win: BrowserWindow | null = null
@@ -63,6 +67,21 @@ export class LauncherWindow {
     }
     this.win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
     this.win.setMenu(null)
+
+    // Alt+F4 hides the launcher instead of destroying it (0.5.1): the hotkey then reached a destroyed window and threw
+    // "Object has been destroyed". Should it close anyway, the next show builds a new one.
+    this.win.on('close', (e) => {
+      if (quitting) return
+      e.preventDefault()
+      this.hide()
+    })
+    const win = this.win
+    win.on('closed', () => {
+      // applyConfig replaces the window; the old one's late 'closed' must not drop the new one
+      if (this.win !== win) return
+      this.win = null
+      this.ready = false
+    })
 
     this.win.on('blur', () => {
       if (settings.get().hideOnBlur && !this.win?.webContents.isDevToolsOpened()) this.hide()
@@ -143,7 +162,10 @@ export class LauncherWindow {
   }
 
   show() {
-    if (!this.win) return
+    if (!this.win) {
+      this.create().once('ready-to-show', () => this.show())
+      return
+    }
     this.position()
     this.win.showInactive()
     if (settings.get().showAtTopmost) this.win.setAlwaysOnTop(true, 'screen-saver')
@@ -158,7 +180,7 @@ export class LauncherWindow {
   }
 
   toggle() {
-    if (!this.win) return
+    if (!this.win) return this.show()
     if (this.win.isVisible() && this.win.isFocused()) this.hide()
     else this.show()
   }

@@ -12,6 +12,13 @@ export interface ChangelogEntry {
 // a new x.y.0 also gets a title for its What's new banner.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.1',
+    date: '2026-10-24',
+    changes: [
+      'Closing the search window with Alt+F4 no longer breaks Lume: the shortcut showed an error ("Object has been destroyed") instead of opening it. Alt+F4 now just hides it, like Esc.'
+    ]
+  },
+  {
     version: '0.5.0',
     date: '2026-10-23',
     title: 'One home for Lume, beside our other apps',
