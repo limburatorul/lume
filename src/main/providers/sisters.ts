@@ -7,7 +7,8 @@ import { scoreCandidate } from '../search/fuzzy.js'
 interface Entry {
   id: string
   app: string
-  /** The sharing app's own exe: Reel's films run through explorer.exe, whose folder icon says nothing. */
+  /** The sharing app's own exe: Reel's films run through explorer.exe, whose folder icon says nothing. An item
+   *  may name its own picture first (File Labs' pinned files and shortcuts, 0.5.2): `icon|card.exe`. */
   icon: string
   title: string
   subtitle: string
@@ -21,7 +22,7 @@ const MIN_SCORE = 0.35
 /** The search runs on every keystroke, so the files are read at most this often. */
 const TTL = 30_000
 
-const GLYPHS: Record<string, string> = { game: 'play', film: 'play', task: 'file', folder: 'file', backup: 'archive' }
+const GLYPHS: Record<string, string> = { game: 'play', film: 'play', task: 'file', folder: 'file', file: 'file', shortcut: 'app', backup: 'archive' }
 
 /*
  * The items file is written by another app and run as a command line, so it is
@@ -85,10 +86,14 @@ function load(root: string): Entry[] {
       const args: string[] = Array.isArray(run.args) ? run.args.filter((a: unknown) => typeof a === 'string') : []
       if (args.length > MAX_ARGS || args.some((a) => a.length > MAX_ARG_LENGTH || CONTROL.test(a))) continue
       const kind = typeof item.kind === 'string' ? item.kind : 'item'
+      // Its own icon: a drive path only (a network path would be opened just to draw it), and no '|', which separates
+      // icon candidates.
+      const own = typeof item.icon === 'string' && /^[a-z]:\\/i.test(item.icon) && item.icon.length <= MAX_ARG_LENGTH
+        && !CONTROL.test(item.icon) && !item.icon.includes('|') ? item.icon + '|' : ''
       entries.push({
         id: 'pl:' + appId + ':' + run.exe + ' ' + args.join(' '),
         app: appId,
-        icon: card.exe,
+        icon: own + card.exe,
         title: item.title,
         subtitle: card.name + ' · ' + kind,
         detail: typeof item.subtitle === 'string' && item.subtitle ? item.subtitle : undefined,

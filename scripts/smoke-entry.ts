@@ -188,7 +188,7 @@ console.log('\n--- sister apps ---')
   const zip = 'D:\\Backups\\Thunderbird 2026-10-20.zip'
   const notExe = path.join(root, 'witcher.bat')
   writeFileSync(notExe, '')
-  const backup = (title: string, run: unknown) => ({ title, subtitle: 'Thunderbird backup', kind: 'backup', run })
+  const backup = (title: string, run: unknown, icon?: string) => ({ title, subtitle: 'Thunderbird backup', kind: 'backup', run, icon })
   put('data/stash.items.json', '\uFEFF' + JSON.stringify({
     schema: 1,
     updated: '2026-10-20T08:00:00Z',
@@ -201,9 +201,9 @@ console.log('\n--- sister apps ---')
       backup('Witcher missing exe', { exe: path.join(root, 'gone.exe'), args: [] }),
       backup('Witcher exe with newline', { exe: exe + '\n', args: [] }),
       backup('Witcher nine args', { exe, args: Array(9).fill('x') }),
-      backup('Witcher eight args', { exe, args: Array(8).fill('x') }),
+      backup('Witcher eight args', { exe, args: Array(8).fill('x') }, 'C:\\Pins\\notes.txt'),
       backup('Witcher long arg', { exe, args: ['x'.repeat(1025)] }),
-      backup('Witcher longest arg', { exe, args: ['x'.repeat(1024)] }),
+      backup('Witcher longest arg', { exe, args: ['x'.repeat(1024)] }, '\\\\server\\share\\notes.txt'),
       backup('Witcher control arg', { exe, args: ['--browse', 'a\nb'] }),
       backup('Witcher nul arg', { exe, args: ['a\u0000b'] }),
       backup('Witcher exe not a string', { exe: 7 }),
@@ -226,6 +226,8 @@ console.log('\n--- sister apps ---')
     ['survives garbage json', got.filter((r) => r.subtitle.startsWith('Shelf')).length === 2],
     ['reads Stash backups with a BOM', got.some((r) => r.title === 'Witcher backup 2026-10-20' && r.subtitle === 'Stash · backup' && r.glyph === 'archive' && r.action.kind === 'launch' && r.action.args?.[1] === zip)],
     ['stash: only the valid items, eight args and 1,024 chars allowed', got.filter((r) => r.subtitle.startsWith('Stash')).map((r) => r.title).sort().join('|') === 'Witcher backup 2026-10-20|Witcher eight args|Witcher longest arg'],
+    ["an item's own icon comes before its app's", got.find((r) => r.title === 'Witcher eight args')?.iconKey === 'C:\\Pins\\notes.txt|' + exe],
+    ['a network icon is ignored', got.find((r) => r.title === 'Witcher longest arg')?.iconKey === exe],
     ['electron accelerator to HotkeyScan', toHotkeyScanCombo('CommandOrControl+Super+Space') === 'Ctrl+Win+Space'],
   ]
   const holds = seeWhoHolds('Alt+Space')

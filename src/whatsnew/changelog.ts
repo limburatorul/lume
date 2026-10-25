@@ -12,6 +12,15 @@ export interface ChangelogEntry {
 // a new x.y.0 also gets a title for its What's new banner.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.2',
+    date: '2026-10-25',
+    changes: [
+      'Files, folders and shortcuts you **Pin to Lume** from File Labs’ right-click menu now show up when you type their name, each with its own icon. Pick one and it opens as a double-click would; a folder opens in File Labs.',
+      'A new icon, brighter and easier to spot in the taskbar, in the tray and in Settings.',
+      'What’s new now shows a picture for each release, at the top of its notes.',
+    ],
+  },
+  {
     version: '0.5.1',
     date: '2026-10-24',
     changes: [

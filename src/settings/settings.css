@@ -92,12 +92,6 @@ body {
 .brand-mark {
   width: 32px;
   height: 32px;
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(160deg, #5865f2, #a75ee8);
-  color: #fff;
-  font-size: 17px;
 }
 
 .brand-name {
