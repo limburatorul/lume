@@ -1,7 +1,9 @@
 import { app, clipboard, shell } from 'electron'
 import { spawn } from 'node:child_process'
+import fs from 'node:fs'
 import path from 'node:path'
 import type { Action } from '../shared/types.js'
+import { openInFileLabs } from './ecosystem.js'
 import { appIndex } from './indexer/apps.js'
 import { settings } from './settings.js'
 import { themes } from './themes.js'
@@ -58,6 +60,35 @@ function startProcess(target: string, args: string[] | undefined, cwd: string | 
   run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', parts.join(' ')], { hidden: true, elevates: admin })
 }
 
+/** The folder a result opens - the path itself or a plain shortcut's target - or '' when it opens anything else. */
+function folderBehind(p: string): string {
+  let target = p
+  if (p.toLowerCase().endsWith('.lnk')) {
+    try {
+      const link = shell.readShortcutLink(p)
+      if (link.args) return ''
+      target = link.target
+    } catch {
+      return '' // a shortcut to a shell object (Control Panel, This PC) has no file target
+    }
+  }
+  try {
+    return fs.statSync(target).isDirectory() ? target : ''
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * Folders open in File Labs when it is installed, through the same Open as
+ * always - no second button. Not hidden: windowsHide would reach its window.
+ */
+function openedInFileLabs(target: string): boolean {
+  const labs = target ? openInFileLabs(target) : null
+  if (labs) run(labs.exe, labs.args, { hidden: false })
+  return labs !== null
+}
+
 export async function execute(action: Action, ctx: ExecuteContext): Promise<void> {
   const cfg = settings.get()
 
@@ -69,7 +100,9 @@ export async function execute(action: Action, ctx: ExecuteContext): Promise<void
     }
 
     case 'openPath': {
-      if (action.path.toLowerCase().endsWith('.lnk')) {
+      if (openedInFileLabs(folderBehind(action.path))) {
+        // a folder, or a shortcut to one: File Labs has it
+      } else if (action.path.toLowerCase().endsWith('.lnk')) {
         // Let the shell resolve the shortcut so its own args and working
         // directory are honoured, exactly as a double-click in Explorer would.
         run('cmd.exe', ['/c', 'start', '', action.path], { hidden: true })
@@ -88,7 +121,8 @@ export async function execute(action: Action, ctx: ExecuteContext): Promise<void
     }
 
     case 'revealPath': {
-      shell.showItemInFolder(path.normalize(action.path))
+      const file = path.normalize(action.path)
+      if (!openedInFileLabs(file)) shell.showItemInFolder(file)
       ctx.hideWindow()
       return
     }

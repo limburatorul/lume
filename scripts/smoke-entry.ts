@@ -6,7 +6,7 @@ import { isPinned, rankScore, PINNED_SCORE } from '../src/main/search/rank.js'
 import { usage } from '../src/main/store.js'
 import { evaluate } from '../src/main/providers/calculator.js'
 import { sistersProvider } from '../src/main/providers/sisters.js'
-import { seeWhoHolds, toHotkeyScanCombo, worksWith, writeCard } from '../src/main/ecosystem.js'
+import { openInFileLabs, seeWhoHolds, toHotkeyScanCombo, worksWith, writeCard } from '../src/main/ecosystem.js'
 import { CHANGELOG } from '../src/whatsnew/changelog.js'
 import { moveDataFolder } from '../src/main/datafolder.js'
 import { spawn } from 'node:child_process'
@@ -241,6 +241,11 @@ console.log('\n--- sister apps ---')
   checks.push(['works with: no 30% off on a sister line', !lines.some((l) => /30%|code=/.test(l.text + (l.url ?? '')))])
   checks.push(['works with: one offer line, missing paid apps, max 4', offer.map((o) => o.name).join(',') === 'Frostpane,Planner,Reminder'])
   checks.push(['works with: offer links carry the code', offer.every((o) => o.url.includes('?code=SECOND30&utm_source=lume'))])
+  checks.push(['no File Labs card: open stays with the system', openInFileLabs('C:\\Games') === null])
+  card('filelabs', 'File Labs', exe, { commands: { open: ['{path}'] } })
+  checks.push(['File Labs opens the path as one argument', openInFileLabs('D:\\')?.args.join('|') === 'D:\\' && openInFileLabs('D:\\')?.exe === exe])
+  card('filelabs', 'File Labs', exe)
+  checks.push(['File Labs without an open command: system', openInFileLabs('C:\\Games') === null])
 
   // Two writes back to back, as at start followed at once by a new hotkey: the last one must win.
   void writeCard('0.3.0', exe, root, [{ combo: toHotkeyScanCombo('Alt+Space'), does: 'Show or hide Lume', registered: false }])

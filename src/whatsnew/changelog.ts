@@ -12,6 +12,13 @@ export interface ChangelogEntry {
 // a new x.y.0 also gets a title for its What's new banner.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.3',
+    date: '2026-10-27',
+    changes: [
+      'With **File Labs** installed, folders open there: **Open containing folder** shows the file selected in File Labs, and a shortcut to a folder opens it in File Labs too. Without File Labs nothing changes.',
+    ],
+  },
+  {
     version: '0.5.2',
     date: '2026-10-25',
     changes: [

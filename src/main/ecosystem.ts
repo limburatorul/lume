@@ -123,10 +123,21 @@ export function seeWhoHolds(accelerator: string): { exe: string; args: string[] 
   return { url: 'https://protagonistlabs.app/hotkeyscan/?utm_source=lume&utm_medium=app&utm_campaign=hotkey-taken' }
 }
 
+/**
+ * File Labs' `open` command for a file or folder, or null when it is not installed (or too old to list one).
+ * Given a file, File Labs opens its folder with the file selected, the same as Open containing folder.
+ */
+export function openInFileLabs(target: string): { exe: string; args: string[] } | null {
+  const card = readCard('filelabs')
+  const template = card?.commands?.open
+  if (!card || !Array.isArray(template) || !/^[a-z]:\\.*\.exe$/i.test(card.exe)) return null
+  return { exe: card.exe, args: template.map((a) => String(a).replace('{path}', target)) }
+}
+
 /** Most useful first: only the first three missing ones are suggested. */
 const SISTERS: Array<{ id: string; name: string; adds: string; would: string }> = [
   { id: 'shelf', name: 'Shelf', adds: 'puts your games in the results', would: 'would put your games in the results' },
-  { id: 'filelabs', name: 'File Labs', adds: 'puts your folders in the results', would: 'would put your folders in the results' },
+  { id: 'filelabs', name: 'File Labs', adds: 'puts your folders in the results and opens them', would: 'would put your folders in the results and open them' },
   { id: 'hotkeyscan', name: 'HotkeyScan', adds: 'shows which app holds a taken hotkey', would: 'would show which app holds a taken hotkey' },
   { id: 'reel', name: 'Reel', adds: 'puts your films in the results', would: 'would put your films in the results' },
   { id: 'planner', name: 'Planner', adds: 'puts your tasks in the results', would: 'would put your tasks in the results' },
