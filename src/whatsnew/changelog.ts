@@ -12,6 +12,13 @@ export interface ChangelogEntry {
 // a new x.y.0 also gets a title for its What's new banner.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.4',
+    date: '2026-11-01',
+    changes: [
+      'Lume is free and stays free. If you’d like to chip in, **Settings → About** now has a **Buy me a pizza** button. It’s optional, and it goes toward code signing and a Steam listing.',
+    ],
+  },
+  {
     version: '0.5.3',
     date: '2026-10-27',
     changes: [

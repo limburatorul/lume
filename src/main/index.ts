@@ -317,6 +317,8 @@ function registerIpc() {
     if (typeof url === 'string' && url.startsWith('https://protagonistlabs.app/')) void shell.openExternal(url)
   })
 
+  ipcMain.handle('settings:buyPizza', () => shell.openExternal('https://buymeacoffee.com/protagonistlabs'))
+
   ipcMain.handle('settings:preview', () => launcherWindow.show())
   ipcMain.handle('settings:whatsNew', () => openWhatsNew())
   ipcMain.handle('settings:version', () => app.getVersion())

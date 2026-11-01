@@ -1069,7 +1069,13 @@ function renderWhatsNew(): HTMLElement {
   )
   const open = el('button', { class: 'ghost', textContent: 'What’s new' })
   open.addEventListener('click', () => void api.whatsNew())
-  line.append(info, el('div', { class: 'field-control' }, open))
+  const pizza = el('button', {
+    class: 'ghost',
+    textContent: '🍕 Buy me a pizza',
+    title: 'Optional. It goes toward code signing and a Steam listing.',
+  })
+  pizza.addEventListener('click', () => void api.buyPizza())
+  line.append(info, el('div', { class: 'field-control' }, open, pizza))
   return line
 }
 
