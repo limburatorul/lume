@@ -1069,13 +1069,7 @@ function renderWhatsNew(): HTMLElement {
   )
   const open = el('button', { class: 'ghost', textContent: 'What’s new' })
   open.addEventListener('click', () => void api.whatsNew())
-  const pizza = el('button', {
-    class: 'ghost',
-    textContent: '🍕 Buy me a pizza',
-    title: 'Optional. It goes toward code signing and a Steam listing.',
-  })
-  pizza.addEventListener('click', () => void api.buyPizza())
-  line.append(info, el('div', { class: 'field-control' }, open, pizza))
+  line.append(info, el('div', { class: 'field-control' }, open))
   return line
 }
 
@@ -1192,6 +1186,22 @@ function renderNav() {
 
 document.getElementById('open-themes')!.addEventListener('click', () => void api.openThemesFolder())
 document.getElementById('open-config')!.addEventListener('click', () => void api.openConfigFile())
+
+// The pizza button pulses 3 s after the window first shows, then every 10 s;
+// never while the window is hidden or minimised, or the pointer is on it.
+const pizza = document.getElementById('pizza')!
+pizza.addEventListener('click', () => void api.buyPizza())
+pizza.addEventListener('animationend', () => pizza.classList.remove('nudge'))
+const nudge = () => {
+  if (document.visibilityState === 'visible' && !pizza.matches(':hover')) pizza.classList.add('nudge')
+}
+const startNudging = () =>
+  window.setTimeout(() => {
+    nudge()
+    window.setInterval(nudge, 10_000)
+  }, 3000)
+if (document.visibilityState === 'visible') startNudging()
+else document.addEventListener('visibilitychange', startNudging, { once: true })
 
 api.onThemesChanged((list) => {
   themes = list
