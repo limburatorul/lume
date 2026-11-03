@@ -12,6 +12,13 @@ export interface ChangelogEntry {
 // a new x.y.0 also gets a title for its What's new banner.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.5.5',
+    date: '2026-11-03',
+    changes: [
+      '**Buy me a pizza** has moved out of Settings → About to the bottom of the Settings sidebar, so it’s there on every page. It’s red now and pulses gently every 10 seconds, and it stays optional: Lume is free and stays free.',
+    ],
+  },
+  {
     version: '0.5.4',
     date: '2026-11-01',
     changes: [
