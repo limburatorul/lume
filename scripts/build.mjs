@@ -76,6 +76,7 @@ async function copyStatic() {
   await mkdir('dist/main', { recursive: true })
   await cp('src/renderer/index.html', 'dist/renderer/index.html')
   await cp('src/renderer/base.css', 'dist/renderer/base.css')
+  await cp('src/renderer/boot.js', 'dist/renderer/boot.js')
   await cp('src/settings/index.html', 'dist/settings/index.html')
   await cp('src/settings/settings.css', 'dist/settings/settings.css')
   await cp('src/whatsnew/index.html', 'dist/whatsnew/index.html')

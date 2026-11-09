@@ -20,8 +20,8 @@
  * Tinycast's own row hint is a KeyCapChip in ".outline" style: a border with
  * no fill, which is why --hint-bg below is transparent and the border is
  * added by hand - base.css has no border property on .row-hint to override.
- * Pair with "backdrop": "acrylic" - the source paints this over a real blur,
- * not a flat colour.
+ * Pair with "backdrop": "acrylic". The blur is the system's; this file does
+ * not add a CSS one on top of it.
  */
 
 :root {
@@ -70,6 +70,11 @@
   --icon-size: 24px;
   --icon-radius: 6px;
   --glyph-size: 14px;
+  /* Drawn glyphs stay bare, the way the source draws them: no plate behind. */
+  --icon-plate: transparent;
+  --icon-ring: transparent;
+  --edge: rgba(255, 255, 255, 0.14);
+  --edge-top: rgba(255, 255, 255, 0.18);
 
   /* An outline keycap: border only, no fill - see --hint-bg and the rule below. */
   --hint-size: 11px;

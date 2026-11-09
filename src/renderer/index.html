@@ -1,43 +1,46 @@
 <!doctype html>
-<html lang="en" data-backdrop="acrylic">
+<html lang="en" data-backdrop="acrylic" data-material="native" data-shadow="on" data-animate="true">
   <head>
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; img-src data:; style-src 'self' 'unsafe-inline'; script-src 'self';"
+      content="default-src 'none'; img-src data: 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';"
     />
     <title>Lume</title>
+    <script src="boot.js"></script>
     <link rel="stylesheet" href="base.css" />
     <style id="theme"></style>
     <style id="overrides"></style>
   </head>
   <body>
     <div class="lume" id="root">
-      <div class="search" id="search">
-        <span class="search-glyph" id="search-glyph" aria-hidden="true"></span>
-        <input
-          id="input"
-          class="search-input"
-          type="text"
-          autocomplete="off"
-          autocorrect="off"
-          spellcheck="false"
-          placeholder="Search…"
-        />
-        <span class="search-badge" id="badge"></span>
-      </div>
+      <div class="lume-motion" id="motion">
+        <div class="search" id="search">
+          <span class="search-glyph" id="search-glyph" aria-hidden="true"></span>
+          <input
+            id="input"
+            class="search-input"
+            type="text"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="Search…"
+          />
+          <span class="search-badge" id="badge"></span>
+        </div>
 
-      <div class="results-wrap" id="results-wrap">
-        <ul class="results" id="results" role="listbox"></ul>
-      </div>
+        <div class="results-wrap" id="results-wrap">
+          <ul class="results" id="results" role="listbox"></ul>
+        </div>
 
-      <div class="empty-state" id="empty-state" hidden>
-        <div class="empty-title" id="empty-title"></div>
-        <div class="empty-hints" id="empty-hints"></div>
-      </div>
+        <div class="empty-state" id="empty-state" hidden>
+          <div class="empty-title" id="empty-title"></div>
+          <div class="empty-hints" id="empty-hints"></div>
+        </div>
 
-      <div class="context" id="context" hidden>
-        <ul class="context-list" id="context-list" role="menu"></ul>
+        <div class="context" id="context" hidden>
+          <ul class="context-list" id="context-list" role="menu"></ul>
+        </div>
       </div>
     </div>
     <script src="main.js"></script>

@@ -8,6 +8,7 @@ import { evaluate } from '../src/main/providers/calculator.js'
 import { sistersProvider } from '../src/main/providers/sisters.js'
 import { openInFileLabs, seeWhoHolds, toHotkeyScanCombo, worksWith, writeCard } from '../src/main/ecosystem.js'
 import { CHANGELOG } from '../src/whatsnew/changelog.js'
+import { resolveMaterial } from '../src/main/material.js'
 import { moveDataFolder } from '../src/main/datafolder.js'
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -265,6 +266,26 @@ console.log('\n--- sister apps ---')
     console.log((ok ? 'ok  ' : 'FAIL') + '  ' + label)
   }
   rmSync(root, { recursive: true, force: true })
+}
+
+console.log('\n--- window material ---')
+{
+  const cases: Array<[string, Parameters<typeof resolveMaterial>[0], string]> = [
+    ['win11 acrylic', { platform: 'win32', build: 22631, transparency: true, backdrop: 'acrylic' }, 'native'],
+    ['win11 mica, transparency unknown', { platform: 'win32', build: 22631, transparency: null, backdrop: 'mica' }, 'native'],
+    ['win11 acrylic, effects off', { platform: 'win32', build: 22631, transparency: false, backdrop: 'acrylic' }, 'fallback'],
+    ['win10 acrylic', { platform: 'win32', build: 19045, transparency: true, backdrop: 'acrylic' }, 'fallback'],
+    ['win11 21H2 acrylic', { platform: 'win32', build: 22000, transparency: true, backdrop: 'tabbed' }, 'fallback'],
+    ['linux acrylic', { platform: 'linux', build: 22631, transparency: true, backdrop: 'acrylic' }, 'fallback'],
+    ['win11 none', { platform: 'win32', build: 22631, transparency: true, backdrop: 'none' }, 'clear'],
+    ['win10 none', { platform: 'win32', build: 19045, transparency: false, backdrop: 'none' }, 'clear'],
+  ]
+  for (const [label, input, expected] of cases) {
+    const got = resolveMaterial(input)
+    const ok = got === expected
+    if (!ok) failures++
+    console.log((ok ? 'ok  ' : 'FAIL') + '  ' + label.padEnd(36) + got + (ok ? '' : '  (expected ' + expected + ')'))
+  }
 }
 
 /* ------------------------------------------------- data folder move */

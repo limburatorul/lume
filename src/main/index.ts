@@ -27,6 +27,7 @@ import { notifySettings, openSettings, openWhatsNew, settingsWindow } from './se
 import { usage } from './store.js'
 import { themes } from './themes.js'
 import { updater } from './updater.js'
+import { materialMode } from './material.js'
 import { launcherWindow } from './window.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -227,6 +228,7 @@ function bootstrap(): Bootstrap {
     css: themes.css(active),
     activeTheme: active,
     accentColor: accentColor(),
+    material: materialMode(settings.get().backdrop),
     version: app.getVersion(),
     indexCount: appIndex.stats().total,
   }

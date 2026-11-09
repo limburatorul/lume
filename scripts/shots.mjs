@@ -301,13 +301,13 @@ await sleep(1200)
 
 let failure = null
 const SHOTS = [
-  { file: 'launcher-default.png', config: { theme: 'default', ui: { surfaceOpacity: 0.78 } }, query: 'pych' },
+  { file: 'launcher-default.png', config: { theme: 'default', ui: { surfaceOpacity: 0.6 } }, query: 'pych' },
   { file: 'launcher-carbon.png', config: { theme: 'carbon', ui: { surfaceOpacity: 1 } }, query: 'notep' },
   { file: 'launcher-light.png', config: { theme: 'light', ui: { surfaceOpacity: 0.9 } }, query: 'paint' },
-  { file: 'launcher-calc.png', config: { theme: 'default', ui: { surfaceOpacity: 0.78 } }, query: 'sqrt(144) * 2 + 10%' },
+  { file: 'launcher-calc.png', config: { theme: 'default', ui: { surfaceOpacity: 0.6 } }, query: 'sqrt(144) * 2 + 10%' },
   {
     file: 'launcher-actions.png',
-    config: { theme: 'default', ui: { surfaceOpacity: 0.78 } },
+    config: { theme: 'default', ui: { surfaceOpacity: 0.6 } },
     query: 'pych',
     after: 'document.dispatchEvent(new KeyboardEvent("keydown",{key:"Tab",bubbles:true}))',
   },
@@ -356,7 +356,7 @@ for (const shot of SHOTS) {
 // cannot pick up whatever happens to be behind or above it.
 killLaunchers()
 await sleep(600)
-patchConfig({ theme: 'default', ui: { surfaceOpacity: 0.78 } })
+patchConfig({ theme: 'default', ui: { surfaceOpacity: 0.6 } })
 launch(['.', '--settings', `--remote-debugging-port=${PORT}`])
 await sleep(8000)
 writeFileSync(path.join(OUT, 'settings.png'), Buffer.from(await capturePage('settings'), 'base64'))

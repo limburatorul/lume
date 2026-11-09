@@ -1,66 +1,74 @@
 /*
  * Lume - glass
- * Maximum translucency. Best with "backdrop": "acrylic" in config.json.
+ * The clearest of the bundled themes. The blur is the system acrylic; a CSS
+ * backdrop-filter on top of that samples the window's own layer and paints a
+ * flat gray patch, so this theme does not add one.
  */
 
 :root {
-  /* A dark scrim keeps the white type readable over any wallpaper. */
-  --surface-rgb: 14 14 20;
-  --surface-opacity: 0.55;
-  --border: rgba(255, 255, 255, 0.16);
+  --surface-rgb: 12 12 18;
+  --surface-opacity: 0.42;
+  --border: rgba(255, 255, 255, 0.2);
   --border-width: 1px;
-  --radius: 20px;
-  --shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  --radius: 16px;
+  --shadow: 0 10px 16px rgba(0, 0, 0, 0.36), 0 2px 4px rgba(0, 0, 0, 0.24);
+  --edge: rgba(255, 255, 255, 0.18);
+  --edge-top: rgba(255, 255, 255, 0.32);
   --padding: 10px;
 
-  --font: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --text: #ffffff;
-  --text-dim: rgba(255, 255, 255, 0.5);
+  --text-dim: rgba(255, 255, 255, 0.72);
   --accent: #ffffff;
-  --divider: rgba(255, 255, 255, 0.1);
+  --divider: rgba(255, 255, 255, 0.12);
 
   --input-height: 62px;
   --input-size: 21px;
-  --input-weight: 300;
-  --input-padding: 22px;
-  --input-placeholder: rgba(255, 255, 255, 0.35);
+  --input-weight: 400;
+  --input-padding: 20px;
+  --input-placeholder: rgba(255, 255, 255, 0.5);
   --search-glyph: "";
 
-  --row-height: 54px;
-  --row-gap: 4px;
-  --row-radius: 14px;
+  --row-height: 52px;
+  --row-gap: 3px;
+  --row-radius: 10px;
   --row-padding: 12px;
-  --row-bg: rgba(255, 255, 255, 0.03);
-  --row-bg-hover: rgba(255, 255, 255, 0.08);
+  --row-bg: transparent;
+  --row-bg-hover: rgba(255, 255, 255, 0.07);
   --row-bg-selected: rgba(255, 255, 255, 0.16);
   --row-accent-width: 0px;
 
   --title-size: 15px;
-  --title-weight: 400;
-  --title-color: rgba(255, 255, 255, 0.95);
-  --title-color-dim: rgba(255, 255, 255, 0.68);
-  --subtitle-size: 11.5px;
-  --subtitle-color: rgba(255, 255, 255, 0.45);
+  --title-weight: 500;
+  --title-color: #ffffff;
+  --title-color-dim: rgba(255, 255, 255, 0.74);
+  --subtitle-size: 12px;
+  --subtitle-color: rgba(255, 255, 255, 0.78);
   --match-color: #ffffff;
   --match-weight: 700;
-  --match-bg: rgba(255, 255, 255, 0.18);
+  --match-bg: rgba(255, 255, 255, 0.16);
 
-  --icon-size: 32px;
-  --icon-radius: 9px;
+  --icon-size: 30px;
+  --icon-radius: 8px;
+  --icon-plate: rgba(255, 255, 255, 0.06);
+  --icon-ring: rgba(255, 255, 255, 0.12);
 
-  --hint-size: 10px;
+  --hint-size: 11px;
   --hint-bg: rgba(255, 255, 255, 0.12);
-  --hint-color: rgba(255, 255, 255, 0.6);
+  --hint-color: rgba(255, 255, 255, 0.86);
   --hint-radius: 6px;
 
   --anim-duration: 140ms;
 }
 
-.row {
-  backdrop-filter: blur(6px);
+.search-input,
+.row-title,
+.row-sub,
+.empty-title {
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.75);
 }
 
 .row.selected {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
   transition: box-shadow var(--anim-duration) var(--anim-ease);
 }
