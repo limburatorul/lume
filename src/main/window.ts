@@ -1,10 +1,10 @@
 import { app, BrowserWindow, nativeTheme, screen } from 'electron'
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { MaterialMode } from '../shared/types.js'
-import { materialMode, polishFrame } from './material.js'
+import { materialMode, materialReport } from './material.js'
 import { settings } from './settings.js'
-import { themes } from './themes.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const RENDERER = path.resolve(here, '..', 'renderer', 'index.html')
@@ -25,20 +25,37 @@ const CLEAR_PAD_Y = 52
 let quitting = false
 app.on('before-quit', () => (quitting = true))
 
+/**
+ * Focus is still moving for a moment after the window is shown: the hotkey
+ * that summoned it, a second instance exiting, or a DWM call. Hiding on that
+ * blur is what made the launcher flash and vanish, including on Alt+Space.
+ */
+const SHOW_GRACE_MS = 500
+
+/** Console plus userData/material.log — the shot script starts Electron with stdio ignored. */
+function note(line: string) {
+  console.log(line)
+  try {
+    fs.appendFileSync(path.join(app.getPath('userData'), 'material.log'), new Date().toISOString() + ' ' + line + '\n')
+  } catch (err) {
+    console.error('[material] could not write material.log:', err)
+  }
+}
+
 export class LauncherWindow {
   win: BrowserWindow | null = null
   private ready = false
   /** What the live window was built as. Changing it means building another. */
   private mode: MaterialMode = 'native'
-  /** Border colour last handed to DWM, so dragging a slider does not respawn PowerShell. */
-  private frameKey = ''
   private presentQueued = false
+  /** When the window was last shown, so a blur in the grace window does not hide it. */
+  private shownAt = 0
 
   create() {
     const cfg = settings.get()
     this.ready = false
     this.mode = materialMode(cfg.backdrop)
-    this.frameKey = ''
+    note(materialReport(cfg.backdrop))
     const native = this.mode === 'native'
     const clear = this.mode === 'clear'
 
@@ -109,7 +126,13 @@ export class LauncherWindow {
     this.win.on('blur', () => {
       // Captured, so a window we just destroyed cannot hide the one that replaced it.
       if (this.win !== win || win.isDestroyed()) return
-      if (settings.get().hideOnBlur && !win.webContents.isDevToolsOpened()) this.hide()
+      if (!settings.get().hideOnBlur || win.webContents.isDevToolsOpened()) return
+      const age = Date.now() - this.shownAt
+      if (this.shownAt && age >= 0 && age < SHOW_GRACE_MS) {
+        note(`[window] blur ${age}ms after show, not hiding`)
+        return
+      }
+      this.hide('blur')
     })
 
     this.win.webContents.on('did-finish-load', () => {
@@ -151,15 +174,21 @@ export class LauncherWindow {
       return true
     }
 
-    if (next === 'native') this.win.setBackgroundMaterial(cfg.backdrop)
+    if (next === 'native') {
+      // Same constraint as show(): the backdrop has to be attached while the
+      // window is hidden, or Windows 11 24H2/25H2 clears the client area.
+      const wasVisible = this.win.isVisible()
+      if (wasVisible) this.hide('material change')
+      this.win.setBackgroundMaterial(cfg.backdrop)
+      if (wasVisible) this.show()
+    }
     this.win.setHasShadow(next === 'clear' ? false : cfg.useDropShadow)
-    this.win.setAlwaysOnTop(cfg.showAtTopmost, cfg.showAtTopmost ? 'screen-saver' : 'normal')
+    this.raise()
     const [x, y] = this.win.getPosition()
     const [w, h] = this.win.getSize()
     const width = this.frameWidth()
     // Keep the panel centred when the shadow gutter appears or goes away.
     this.win.setBounds({ x: x + Math.round((w - width) / 2), y, width, height: h }, false)
-    this.syncFrame()
     return false
   }
 
@@ -181,25 +210,15 @@ export class LauncherWindow {
     return nativeTheme.shouldUseDarkColors ? '#141418' : '#f6f6f8'
   }
 
-  private frameIsLight() {
-    const cfg = settings.get()
-    const name = cfg.colorScheme === 'system' && !nativeTheme.shouldUseDarkColors ? cfg.themeLight : cfg.theme
-    const css = themes.css(name)
-    const match = css.match(/--surface-rgb:\s*(\d+)\s+(\d+)\s+(\d+)/)
-    if (!match) return !nativeTheme.shouldUseDarkColors
-    const r = Number(match[1])
-    const g = Number(match[2])
-    const b = Number(match[3])
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 160
-  }
-
-  private syncFrame() {
-    if (!this.win || this.mode === 'clear') return
-    const light = this.frameIsLight()
-    const key = (light ? 'light' : 'dark') + ':' + this.mode
-    if (key === this.frameKey) return
-    this.frameKey = key
-    polishFrame(this.win.getNativeWindowHandle(), light)
+  /**
+   * Screen-saver stays above the shot script’s fullscreen backdrop, which
+   * re-asserts a lower topmost band on a timer. Anything that touches DWM
+   * can knock us out of that band, so this is called again shortly after show.
+   */
+  private raise() {
+    if (!this.win) return
+    const top = settings.get().showAtTopmost
+    this.win.setAlwaysOnTop(top, top ? 'screen-saver' : 'normal')
   }
 
   private targetDisplay() {
@@ -257,14 +276,24 @@ export class LauncherWindow {
       this.presentQueued = false
       if (!this.win || this.win.isDestroyed()) return
       this.position()
+      this.shownAt = Date.now()
       this.win.showInactive()
-      if (settings.get().showAtTopmost) this.win.setAlwaysOnTop(true, 'screen-saver')
       this.win.focus()
-      // DWM drops the backdrop while the window is hidden, and the first frame
-      // back is a flat gray until the material is set on a window that is showing.
-      if (this.mode === 'native') this.win.setBackgroundMaterial(settings.get().backdrop)
-      this.syncFrame()
+      /*
+       * The backdrop material is set when the window is created, and not again
+       * here. On Windows 11 24H2/25H2, setBackgroundMaterial on a window that
+       * is already visible clears the client area — the panel flashes opaque,
+       * then vanishes — and a following DWM border-colour change does the same
+       * to the acrylic. The constructor’s material is what actually draws.
+       */
+      this.raise()
+      note(`[window] show ${this.mode} ${settings.get().backdrop}`)
       this.win.webContents.send('window:shown')
+      const shown = this.win
+      setTimeout(() => {
+        if (this.win !== shown || shown.isDestroyed() || !shown.isVisible()) return
+        this.raise()
+      }, 700)
     }
     if (!this.ready) {
       if (this.presentQueued) return
@@ -275,15 +304,16 @@ export class LauncherWindow {
     present()
   }
 
-  hide() {
+  hide(reason = 'hide') {
     if (!this.win || !this.win.isVisible()) return
+    note('[window] hide (' + reason + ')')
     this.win.webContents.send('window:hidden')
     this.win.hide()
   }
 
   toggle() {
     if (!this.win) return this.show()
-    if (this.win.isVisible() && this.win.isFocused()) this.hide()
+    if (this.win.isVisible() && this.win.isFocused()) this.hide('toggle')
     else this.show()
   }
 

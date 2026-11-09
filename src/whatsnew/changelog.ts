@@ -16,6 +16,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-11-09',
     changes: [
       'The frosted window is cleaner. Windows draws the blur once, with a lighter tint, and Lume no longer stacks a second blur or a fade on top of it. That combination was what looked muddy, and what flashed gray as the window opened.',
+      'Opening Lume no longer flashes a solid panel and then dismisses it. The system blur stays attached, and the surface it chose is written to material.log next to config.json.',
       'Corners, the hairline edge and the shadow follow the system material. On Windows 10, or when transparency effects are off, the panel is solid instead of a gray wash.',
       'The launcher and Settings have been redrawn: type, spacing, the selected row and the settings sidebar.',
       'Opacity left at 82% moves to 60%, so the frost can show. Drag the slider up for a more solid panel, or to 100% for a flat one.',

@@ -176,6 +176,85 @@ function assertOnBackdrop(file, pad) {
   }
 }
 
+/**
+ * The padding check only proves the border of the crop is the backdrop. A
+ * launcher that flashed and then hid still passes that, and the picture is
+ * the backdrop alone. White text or a light panel inside the crop is the
+ * launcher; the backdrop never gets that bright.
+ */
+function brightestInside(file) {
+  const src = path.resolve(file).replace(/'/g, "''")
+  return Number(
+    powershell(
+      'Add-Type -AssemblyName System.Drawing;' +
+        "$b=New-Object System.Drawing.Bitmap('" + src + "');" +
+        '$x0=[int]($b.Width*0.22); $x1=[int]($b.Width*0.78);' +
+        '$y0=[int]($b.Height*0.22); $y1=[int]($b.Height*0.78);' +
+        '$max=0;' +
+        'for ($y=$y0; $y -le $y1; $y += 4) {' +
+        '  for ($x=$x0; $x -le $x1; $x += 4) {' +
+        '    $c=$b.GetPixel($x,$y);' +
+        '    $m=[Math]::Max($c.R,[Math]::Max($c.G,$c.B));' +
+        '    if ($m -gt $max) { $max=$m }' +
+        '  }' +
+        '}' +
+        '$b.Dispose(); $max',
+    ),
+  )
+}
+
+function assertLauncherVisible(file) {
+  const brightest = brightestInside(file)
+  console.log('  interior brightest', brightest)
+  if (!Number.isFinite(brightest) || brightest < 170) {
+    throw new Error(
+      path.basename(file) +
+        ' does not contain the launcher (brightest interior pixel ' +
+        brightest +
+        '). The window was missing or behind the backdrop.',
+    )
+  }
+}
+
+function tailMaterialLog() {
+  const file = path.join(path.dirname(CONFIG), 'material.log')
+  try {
+    const lines = readFileSync(file, 'utf8').trim().split(/\r?\n/).slice(-6)
+    for (const line of lines) console.log('  ' + line)
+  } catch {
+    console.log('  (no material.log)')
+  }
+}
+
+async function launcherState() {
+  try {
+    return await evaluate(
+      'renderer',
+      `(()=>{const r=document.getElementById('root');const s=getComputedStyle(r);` +
+        `return JSON.stringify({material:document.documentElement.dataset.material,` +
+        `visibility:document.visibilityState,bg:s.backgroundColor,` +
+        `h:Math.round(r.getBoundingClientRect().height)});})()`,
+    )
+  } catch (err) {
+    return 'unavailable: ' + err.message
+  }
+}
+
+/** Second instance asks the running one to show. Retries until the page is actually showing. */
+async function raiseLauncher() {
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    launch(['.'])
+    await sleep(700)
+    const state = await launcherState()
+    console.log('  raise', attempt, state)
+    if (typeof state === 'string' && state.includes('"visibility":"visible"')) {
+      const h = Number(state.match(/"h":(\d+)/)?.[1] ?? 0)
+      if (h > 40) return
+    }
+  }
+  throw new Error('launcher window did not stay visible')
+}
+
 function crop(src, dest, rect) {
   powershell(
     'Add-Type -AssemblyName System.Drawing;' +
@@ -329,8 +408,8 @@ for (const shot of SHOTS) {
   })
   launch(['.', `--remote-debugging-port=${PORT}`])
   await sleep(7000)
-  launch(['.']) // a second instance tells the running one to show its window
-  await sleep(2500)
+  tailMaterialLog()
+  await raiseLauncher()
 
   await evaluate(
     'renderer',
@@ -343,11 +422,16 @@ for (const shot of SHOTS) {
     await sleep(600)
   }
 
+  // One more raise immediately before the grab. The backdrop re-asserts
+  // topmost on a timer; this puts the launcher back in front of that tick.
+  await raiseLauncher()
   const rect = await windowRect('renderer', origin)
+  console.log('  rect', JSON.stringify(rect))
   grabScreen(tmp)
   const dest = path.join(OUT, shot.file)
   crop(tmp, dest, rect)
   assertOnBackdrop(dest, 100)
+  assertLauncherVisible(dest)
   console.log('wrote', shot.file)
 }
 
