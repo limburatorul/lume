@@ -449,18 +449,46 @@ console.log('wrote settings.png')
   // Recorded rather than thrown, so the cleanup below always runs: an aborted
   // run must not leave the user's config patched with the shot settings.
   failure = err
+} finally {
+  // Restore the desktop before anything that can throw. taskkill has often
+  // not let go of %TEMP%\lume-backdrop yet, and an EPERM from that rmSync used
+  // to skip restoreWindows(), leaving every window minimised.
+  try {
+    writeFileSync(CONFIG, original, 'utf8')
+  } catch (err) {
+    console.error('could not restore config:', err.message)
+    failure = failure ?? err
+  }
+  try {
+    restoreWindows()
+  } catch (err) {
+    console.error('could not restore windows:', err.message)
+    failure = failure ?? err
+  }
+  killLaunchers()
+  try {
+    execFileSync('taskkill', ['/F', '/T', '/PID', String(backdrop.pid)], { stdio: 'ignore' })
+  } catch {
+    /* already gone */
+  }
+  try {
+    rmSync(tmp, { force: true })
+  } catch {
+    /* the full-screen grab can still be locked; it lives in temp */
+  }
+  for (let attempt = 1; attempt <= 8; attempt++) {
+    try {
+      rmSync(backdropDir, { recursive: true, force: true })
+      break
+    } catch (err) {
+      if (attempt === 8) {
+        console.error('could not remove ' + backdropDir + ' (' + err.code + '); leaving it')
+        break
+      }
+      await sleep(250)
+    }
+  }
 }
-
-killLaunchers()
-try {
-  execFileSync('taskkill', ['/F', '/T', '/PID', String(backdrop.pid)], { stdio: 'ignore' })
-} catch {
-  /* already gone */
-}
-writeFileSync(CONFIG, original, 'utf8')
-rmSync(tmp, { force: true })
-rmSync(backdropDir, { recursive: true, force: true })
-restoreWindows()
 
 if (failure) {
   console.error(failure.message)
