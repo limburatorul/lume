@@ -16,8 +16,8 @@ const TITLEBAR_HEIGHT = 44
 function overlay() {
   const dark = nativeTheme.shouldUseDarkColors
   return {
-    color: dark ? '#101015' : '#eeeef3',
-    symbolColor: dark ? '#e6e6ee' : '#16161c',
+    color: dark ? '#101014' : '#ececf1',
+    symbolColor: dark ? '#f4f4f8' : '#1a1a1f',
     height: TITLEBAR_HEIGHT,
   }
 }
@@ -43,7 +43,7 @@ export function openSettings() {
     // strip, so settings look like the launcher rather than a stray dialog.
     titleBarStyle: 'hidden',
     titleBarOverlay: overlay(),
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#16161c' : '#f7f7fa',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#121216' : '#f3f3f7',
     webPreferences: {
       preload: PRELOAD,
       contextIsolation: true,
@@ -94,7 +94,7 @@ export function openWhatsNew(onClosed?: () => void) {
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
     titleBarOverlay: overlay(),
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#16161c' : '#f7f7fa',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#121216' : '#f3f3f7',
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
   })
 

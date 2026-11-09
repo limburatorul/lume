@@ -3,60 +3,79 @@
  * properties with sane defaults; a theme file only needs to override the
  * variables it cares about. Themes are loaded after this file, so any rule
  * they write wins.
+ *
+ * The window is one of three materials, set on <html data-material>:
+ *   native   — DWM acrylic / mica / tabbed. The page is a tint and a grain,
+ *              never a second blur. Windows owns the corner, the shadow and
+ *              the outer stroke.
+ *   fallback — a material was asked for and this OS will not draw one. The
+ *              panel is solid, so a gray DWM stand-in cannot show through.
+ *   clear    — no material. The theme's own alpha, radius and shadow.
  */
 
 :root {
+  color-scheme: dark;
+
   /*
    * Surface. Themes set --surface-rgb (a bare "r g b" triple) and a default
    * --surface-opacity; the settings panel overrides the opacity alone, which
    * is why the colour and its alpha are kept as separate properties.
    * A theme wanting something other than a flat fill can still override --bg.
    */
-  --surface-rgb: 22 22 28;
-  --surface-opacity: 0.82;
+  --surface-rgb: 20 20 26;
+  --surface-opacity: 0.6;
   --bg: rgb(var(--surface-rgb) / var(--surface-opacity));
-  --border: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.12);
   --border-width: 1px;
-  --radius: 14px;
-  --shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+  --radius: 12px;
+  /* Sized to fit the clear-mode padding below (22px sides, 36px bottom). */
+  --shadow: 0 10px 16px rgba(0, 0, 0, 0.34), 0 2px 4px rgba(0, 0, 0, 0.22);
+  --edge: rgba(255, 255, 255, 0.12);
+  --edge-top: rgba(255, 255, 255, 0.2);
   --padding: 8px;
+  /*
+   * Optional grain tile, painted under the text when a system backdrop is on.
+   * Left off: DWM's acrylic already has noise, and a second tile on top of it
+   * reads as static. A theme can set this to a url() of its own.
+   */
+  --noise-image: none;
 
   /* Type */
-  --font: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Cascadia Code", "Consolas", ui-monospace, monospace;
-  --text: rgba(255, 255, 255, 0.95);
-  --text-dim: rgba(255, 255, 255, 0.45);
-  --accent: #7c6cf5;
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --text: rgba(255, 255, 255, 0.96);
+  --text-dim: rgba(255, 255, 255, 0.72);
+  --accent: #8b7cf6;
 
   /* Query box */
-  --input-height: 56px;
-  --input-size: 19px;
-  --input-weight: 400;
-  --input-padding: 16px;
+  --input-height: 58px;
+  --input-size: 20px;
+  --input-weight: 500;
+  --input-padding: 18px;
   --input-color: var(--text);
-  --input-placeholder: rgba(255, 255, 255, 0.3);
+  --input-placeholder: rgba(255, 255, 255, 0.46);
   --search-glyph: "";
-  --search-glyph-size: 17px;
+  --search-glyph-size: 16px;
   --search-glyph-color: var(--text-dim);
-  --divider: rgba(255, 255, 255, 0.07);
+  --divider: rgba(255, 255, 255, 0.1);
 
   /* Rows */
-  --row-height: 50px;
+  --row-height: 52px;
   --row-gap: 2px;
-  --row-radius: 9px;
+  --row-radius: 8px;
   --row-padding: 10px;
   --row-bg: transparent;
-  --row-bg-hover: rgba(255, 255, 255, 0.05);
-  --row-bg-selected: rgba(255, 255, 255, 0.1);
-  --row-accent-width: 0px;
+  --row-bg-hover: rgba(255, 255, 255, 0.06);
+  --row-bg-selected: color-mix(in srgb, var(--accent) 28%, rgb(var(--surface-rgb)));
+  --row-accent-width: 2px;
   --row-accent-color: var(--accent);
   --title-size: 14.5px;
-  --title-weight: 500;
+  --title-weight: 550;
   --title-color: var(--text);
   /* Used only when the title contains highlighted characters, so the matched
      part reads as the bright foreground. Titles with no match stay full. */
-  --title-color-dim: var(--title-color);
-  --subtitle-size: 11.5px;
+  --title-color-dim: rgba(255, 255, 255, 0.78);
+  --subtitle-size: 12px;
   --subtitle-color: var(--text-dim);
   --match-color: var(--accent);
   --match-weight: 700;
@@ -64,18 +83,20 @@
 
   /* Icons */
   --icon-size: 30px;
-  --icon-radius: 6px;
-  --glyph-size: 17px;
+  --icon-radius: 8px;
+  --icon-plate: rgba(255, 255, 255, 0.05);
+  --icon-ring: rgba(255, 255, 255, 0.08);
+  --glyph-size: 16px;
 
   /* Right-hand index hint */
-  --hint-size: 10.5px;
+  --hint-size: 11px;
   --hint-color: var(--text-dim);
-  --hint-bg: rgba(255, 255, 255, 0.07);
-  --hint-radius: 5px;
+  --hint-bg: rgba(255, 255, 255, 0.1);
+  --hint-radius: 6px;
 
-  /* Motion */
-  --anim-duration: 110ms;
-  --anim-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Motion. Short, and never a fade of the surface itself — see .lume-motion. */
+  --anim-duration: 130ms;
+  --anim-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -93,46 +114,107 @@ body {
   user-select: none;
   cursor: default;
   font-family: var(--font);
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* With a Windows backdrop the OS paints the material; a plain window paints
-   its own surface. `--bg` covers both because the theme picks the value. */
-/* Shown with a short rise; disabled when --anim-duration is 0. */
-@keyframes lume-in {
+html[data-material="fallback"],
+html[data-material="fallback"] body {
+  background: rgb(var(--surface-rgb));
+}
+
+/*
+ * Clear mode only. The padding is the shadow's room, and window.ts adds the
+ * same 44 by 52 pixels to the window so the panel stays the configured width.
+ * Keep the two in step.
+ */
+html[data-material="clear"][data-shadow="on"] body {
+  padding: 16px 22px 36px;
+}
+
+@keyframes lume-rise {
   from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.995);
+    transform: translateY(-4px);
   }
 }
 
+/*
+ * The rise is on an inner wrapper, never on the surface. Transforming or
+ * fading the element that holds the translucent fill promotes it to its own
+ * layer, and DWM then composites a flat gray box instead of the backdrop for
+ * the whole animation — which runs every time the launcher is shown.
+ */
+.lume-motion {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  animation: lume-rise var(--anim-duration) var(--anim-ease);
+}
+
 .lume {
-  animation: lume-in var(--anim-duration) var(--anim-ease);
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  max-height: 900px;
   border-radius: var(--radius);
   background: var(--bg);
   border: var(--border-width) solid var(--border);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), inset 0 1px 0 var(--edge-top);
   overflow: hidden;
   color: var(--text);
 }
 
 /*
- * With a system backdrop the window's outline belongs to Windows: it clips the
- * window to its own 8px corners and draws its own 1px border. A larger CSS
- * radius left the backdrop showing between the two curves at every corner,
- * and the CSS border drew a second outline just inside Windows' one. So the
- * panel fills the window square and Windows does the rounding.
+ * With a system backdrop, or the solid stand-in, Windows clips the window to
+ * its own corners and draws its own shadow. A CSS radius here left a wedge of
+ * backdrop between the two curves, and a CSS drop shadow is clipped to nothing.
+ * The inset stroke is the edge we control; DWM's border is recoloured to match.
  */
-html:not([data-backdrop="none"]) .lume {
+html[data-material="native"] .lume,
+html[data-material="fallback"] .lume {
   border-radius: 0;
   border-color: transparent;
+  box-shadow: inset 0 1px 0 var(--edge-top), inset 0 0 0 1px var(--edge);
 }
 
-html[data-animate="false"] .lume {
+html[data-material="fallback"] .lume {
+  background: rgb(var(--surface-rgb));
+}
+
+/* Grain sits in the background, under the inset stroke and the text. */
+html[data-material="native"] .lume {
+  background-image: var(--noise-image);
+  background-repeat: repeat;
+  background-size: 96px 96px;
+}
+
+html[data-material="clear"][data-shadow="off"] .lume {
+  box-shadow: inset 0 1px 0 var(--edge-top);
+}
+
+html[data-animate="false"] .lume-motion {
   animation: none;
+}
+
+html[data-animate="false"] .row,
+html[data-animate="false"] .context-item,
+html[data-animate="false"] .row-hint {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lume-motion {
+    animation: none;
+  }
+
+  .row,
+  .context-item,
+  .row-hint {
+    transition: none;
+  }
 }
 
 /* ---------- query box ---------- */
@@ -140,7 +222,7 @@ html[data-animate="false"] .lume {
 .search {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   height: var(--input-height);
   min-height: var(--input-height);
   padding: 0 var(--input-padding);
@@ -152,6 +234,8 @@ html[data-animate="false"] .lume {
   color: var(--search-glyph-color);
   line-height: 1;
   flex: none;
+  display: grid;
+  place-items: center;
 }
 .search-glyph::before {
   content: var(--search-glyph);
@@ -170,6 +254,7 @@ html[data-animate="false"] .lume {
   font-family: inherit;
   font-size: var(--input-size);
   font-weight: var(--input-weight);
+  letter-spacing: -0.012em;
   color: var(--input-color);
   caret-color: var(--accent);
   user-select: text;
@@ -178,16 +263,19 @@ html[data-animate="false"] .lume {
 
 .search-input::placeholder {
   color: var(--input-placeholder);
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .search-badge {
   flex: none;
   font-size: var(--hint-size);
+  font-weight: 600;
   color: var(--hint-color);
   background: var(--hint-bg);
   border-radius: var(--hint-radius);
-  padding: 3px 7px;
-  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 .search-badge:empty {
@@ -198,9 +286,6 @@ html[data-animate="false"] .lume {
 
 /* The window stops growing at 900px (window.ts): past that the results scroll, so the action menu
    under them stays inside the window instead of being cut off below it. */
-.lume {
-  max-height: 900px;
-}
 
 .results-wrap {
   flex: 1 1 auto;
@@ -208,6 +293,18 @@ html[data-animate="false"] .lume {
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text) 32%, transparent) transparent;
+}
+
+.results-wrap::-webkit-scrollbar {
+  width: 10px;
+}
+
+.results-wrap::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 28%, transparent);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
 }
 
 .search,
@@ -221,19 +318,17 @@ html[data-animate="false"] .lume {
 
 .results {
   list-style: none;
-  padding: var(--padding);
-  padding-top: 0;
   display: flex;
   flex-direction: column;
   gap: var(--row-gap);
   border-top: 1px solid var(--divider);
-  padding-top: var(--padding);
+  padding: 6px var(--padding) 8px;
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   height: var(--row-height);
   min-height: var(--row-height);
   padding: 0 var(--row-padding);
@@ -256,12 +351,11 @@ html[data-animate="false"] .lume {
   content: "";
   position: absolute;
   left: 0;
-  top: 0;
-  bottom: 0;
+  top: 12px;
+  bottom: 12px;
   width: var(--row-accent-width);
   background: var(--row-accent-color);
-  border-radius: 0 2px 2px 0;
-  transition: background var(--anim-duration) var(--anim-ease);
+  border-radius: 999px;
 }
 
 .row-icon {
@@ -272,19 +366,28 @@ html[data-animate="false"] .lume {
   display: grid;
   place-items: center;
   overflow: hidden;
+  background: var(--icon-plate);
+  box-shadow: inset 0 0 0 1px var(--icon-ring);
+}
+
+/* A real bitmap already has its own tile; the plate is only for drawn glyphs. */
+.row-icon:has(img) {
+  background: transparent;
+  box-shadow: none;
 }
 
 .row-icon img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  image-rendering: -webkit-optimize-contrast;
 }
 
 .row-icon .glyph {
   font-size: var(--glyph-size);
   color: var(--text-dim);
   line-height: 1;
+  display: grid;
+  place-items: center;
 }
 
 /* Drawn icons follow the text colour around them, at a size a theme's
@@ -292,18 +395,19 @@ html[data-animate="false"] .lume {
    so they are set a little larger than the font size they replace. */
 .glyph-svg {
   display: block;
-  width: calc(var(--glyph-size) * 1.3);
-  height: calc(var(--glyph-size) * 1.3);
+  width: calc(var(--glyph-size) * 1.25);
+  height: calc(var(--glyph-size) * 1.25);
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.7;
+  stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .search-glyph .glyph-svg {
-  width: calc(var(--search-glyph-size) * 1.3);
-  height: calc(var(--search-glyph-size) * 1.3);
+  width: calc(var(--search-glyph-size) * 1.25);
+  height: calc(var(--search-glyph-size) * 1.25);
+  color: var(--search-glyph-color);
 }
 
 .row-text {
@@ -317,6 +421,7 @@ html[data-animate="false"] .lume {
 .row-title {
   font-size: var(--title-size);
   font-weight: var(--title-weight);
+  letter-spacing: -0.006em;
   color: var(--title-color);
   white-space: nowrap;
   overflow: hidden;
@@ -340,6 +445,7 @@ html[data-animate="false"] .lume {
   overflow: hidden;
   text-overflow: ellipsis;
   direction: ltr;
+  line-height: 1.3;
 }
 
 .row-sub:empty {
@@ -349,11 +455,13 @@ html[data-animate="false"] .lume {
 .row-hint {
   flex: none;
   font-size: var(--hint-size);
+  font-weight: 550;
   color: var(--hint-color);
   background: var(--hint-bg);
   border-radius: var(--hint-radius);
-  padding: 2px 6px;
+  padding: 3px 7px;
   font-family: var(--font-mono);
+  letter-spacing: 0.01em;
   opacity: 0;
   transition: opacity var(--anim-duration) var(--anim-ease);
 }
@@ -371,7 +479,7 @@ html[data-animate="false"] .lume {
 
 .context {
   border-top: 1px solid var(--divider);
-  padding: var(--padding);
+  padding: 6px var(--padding) 8px;
 }
 
 .context-list {
@@ -385,11 +493,12 @@ html[data-animate="false"] .lume {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   height: 36px;
   padding: 0 var(--row-padding);
   border-radius: var(--row-radius);
   font-size: var(--title-size);
+  font-weight: var(--title-weight);
   color: var(--title-color);
   transition: background var(--anim-duration) var(--anim-ease);
 }
@@ -400,8 +509,12 @@ html[data-animate="false"] .lume {
 
 .context-item .hint {
   font-size: var(--hint-size);
+  font-weight: 550;
   color: var(--hint-color);
   font-family: var(--font-mono);
+  background: var(--hint-bg);
+  border-radius: var(--hint-radius);
+  padding: 2px 7px;
 }
 
 /* ---------- empty state ---------- */
@@ -413,12 +526,13 @@ html[data-animate="false"] .lume {
 /* Shown instead of the result list when there is nothing to list, so a fresh
    install is never just a blank box. */
 .empty-state {
-  padding: 16px var(--input-padding) 18px;
+  padding: 14px var(--input-padding) 16px;
   border-top: 1px solid var(--divider);
 }
 
 .empty-title {
   font-size: var(--title-size);
+  font-weight: var(--title-weight);
   color: var(--title-color);
   margin-bottom: 8px;
 }
@@ -437,9 +551,10 @@ html[data-animate="false"] .lume {
 
 .empty-hints code {
   font-family: var(--font-mono);
+  font-size: 0.92em;
   color: var(--hint-color);
   background: var(--hint-bg);
   border-radius: var(--hint-radius);
-  padding: 1px 5px;
-  margin-right: 5px;
+  padding: 1px 6px;
+  margin-right: 6px;
 }

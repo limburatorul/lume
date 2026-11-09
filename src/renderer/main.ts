@@ -12,6 +12,7 @@ const api = window.lume
 
 const el = {
   root: document.getElementById('root') as HTMLDivElement,
+  motion: document.getElementById('motion') as HTMLDivElement,
   input: document.getElementById('input') as HTMLInputElement,
   glyph: document.getElementById('search-glyph') as HTMLSpanElement,
   badge: document.getElementById('badge') as HTMLSpanElement,
@@ -224,7 +225,11 @@ let heightFrame = 0
 function reportHeight() {
   cancelAnimationFrame(heightFrame)
   heightFrame = requestAnimationFrame(() => {
-    api.reportHeight(Math.ceil(el.root.getBoundingClientRect().height))
+    // Clear mode pads the body so the CSS shadow has room. The window has to
+    // grow by that padding or the shadow is clipped and the panel is crushed.
+    const body = getComputedStyle(document.body)
+    const pad = (parseFloat(body.paddingTop) || 0) + (parseFloat(body.paddingBottom) || 0)
+    api.reportHeight(Math.ceil(el.root.getBoundingClientRect().height + pad))
   })
 }
 
@@ -451,6 +456,8 @@ function applyBootstrap(b: Bootstrap) {
   el.theme.textContent = b.css
   el.overrides.textContent = overrideCss(b.config, b.accentColor)
   document.documentElement.dataset.backdrop = b.config.backdrop
+  document.documentElement.dataset.material = b.material
+  document.documentElement.dataset.shadow = b.config.useDropShadow ? 'on' : 'off'
   document.documentElement.dataset.animate = String(b.config.useAnimation)
   el.input.placeholder = b.config.showPlaceholder ? b.config.placeholder : ''
   applySearchGlyph()
@@ -475,9 +482,9 @@ api.onConfigChanged((b) => {
 api.onShown(() => {
   // The OS no longer animates the window in, so the panel's own rise has to
   // run on every show rather than only on the first paint after load.
-  el.root.style.animation = 'none'
-  void el.root.offsetHeight
-  el.root.style.animation = ''
+  el.motion.style.animation = 'none'
+  void el.motion.offsetHeight
+  el.motion.style.animation = ''
 
   const mode = config?.lastQueryMode ?? 'empty'
   if (mode === 'empty') el.input.value = ''

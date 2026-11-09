@@ -161,7 +161,7 @@ const SECTIONS: Section[] = [
             path: 'backdrop',
             label: 'Background material',
             help:
-              'Acrylic is the frosted glass: it blurs whatever sits behind the window, including other apps. Mica only samples the desktop wallpaper, so over a covered screen it reads as a flat colour — pick acrylic if you want the blur. “None” gives a plain window, where opacity alone decides how see-through it is, and what shows through stays sharp. Changing this rebuilds the launcher window.',
+              'Acrylic is the frosted glass: it blurs whatever sits behind the window, including other apps. Mica only samples the desktop wallpaper, so over a covered screen it reads as a flat colour — pick acrylic if you want the blur. On Windows 10, or with transparency effects turned off, Lume paints a solid panel instead of a gray wash. “None” is a plain window: opacity decides how see-through it is, and what shows through stays sharp. Changing this rebuilds the launcher window.',
             options: () => [
               { value: 'acrylic', label: 'Acrylic (frosted glass)' },
               { value: 'mica', label: 'Mica' },
@@ -173,7 +173,7 @@ const SECTIONS: Section[] = [
             kind: 'slider',
             path: 'ui.surfaceOpacity',
             label: 'Opacity',
-            help: 'How much of the theme colour covers the blur. 100% hides the desktop entirely.',
+            help: 'How much of the theme colour covers the blur. Around 60% is frosted glass; 100% is a solid panel. The light theme never goes below 88%, so its text holds. While Windows is drawing the solid fallback, the panel stays opaque.',
             min: 0.3,
             max: 1,
             step: 0.02,

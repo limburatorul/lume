@@ -1,44 +1,65 @@
 /*
  * Lume - light
- * Pair with "backdrop": "mica" or "none" in config.json.
+ * Pair with "backdrop": "mica" or "none". The body stays dense on purpose:
+ * dark type over a thin white tint disappears into a bright wallpaper.
  */
 
 :root {
+  color-scheme: light;
   --surface-rgb: 250 250 252;
   --surface-opacity: 0.92;
-  --border: rgba(0, 0, 0, 0.08);
-  --radius: 14px;
-  --shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  /*
+   * The opacity slider is shared with the dark themes, whose frost sits near
+   * 0.6. Dark type on a white tint that thin disappears into a dark wallpaper,
+   * so the light surface never goes below 0.88. Above that, the slider still wins.
+   */
+  --bg: rgb(var(--surface-rgb) / clamp(0.88, var(--surface-opacity), 1));
+  --border: rgba(0, 0, 0, 0.1);
+  --radius: 12px;
+  --shadow: 0 10px 16px rgba(0, 0, 0, 0.16), 0 2px 4px rgba(0, 0, 0, 0.08);
+  --edge: rgba(0, 0, 0, 0.1);
+  --edge-top: rgba(255, 255, 255, 0.9);
 
-  --font: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
-  --text: #1b1b1f;
-  --text-dim: rgba(0, 0, 0, 0.45);
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --text: #1a1a1f;
+  --text-dim: rgba(0, 0, 0, 0.64);
   --accent: #4c5fd7;
-  --divider: rgba(0, 0, 0, 0.07);
+  --divider: rgba(0, 0, 0, 0.08);
 
-  --input-height: 56px;
-  --input-size: 19px;
+  --input-height: 58px;
+  --input-size: 20px;
+  --input-weight: 500;
   --input-padding: 18px;
-  --input-placeholder: rgba(0, 0, 0, 0.3);
+  --input-placeholder: rgba(0, 0, 0, 0.42);
   --search-glyph: "";
-  --search-glyph-size: 15px;
-  --search-glyph-color: rgba(0, 0, 0, 0.35);
+  --search-glyph-size: 16px;
+  --search-glyph-color: rgba(0, 0, 0, 0.45);
 
-  --row-height: 50px;
-  --row-radius: 9px;
-  --row-bg-hover: rgba(0, 0, 0, 0.04);
-  --row-bg-selected: color-mix(in srgb, var(--accent) 13%, transparent);
-  --row-accent-width: 3px;
+  --row-height: 52px;
+  --row-radius: 8px;
+  --row-bg-hover: rgba(0, 0, 0, 0.045);
+  --row-bg-selected: color-mix(in srgb, var(--accent) 16%, rgb(var(--surface-rgb)));
+  --row-accent-width: 2px;
 
-  --title-color: #1b1b1f;
-  --title-color-dim: rgba(0, 0, 0, 0.55);
-  --subtitle-color: rgba(0, 0, 0, 0.45);
-  --match-color: #14142b;
+  --title-color: #1a1a1f;
+  --title-color-dim: rgba(0, 0, 0, 0.62);
+  --subtitle-color: rgba(0, 0, 0, 0.6);
+  --match-color: #1c1c4a;
   --match-weight: 700;
 
   --icon-size: 30px;
-  --icon-radius: 6px;
+  --icon-radius: 8px;
+  --icon-plate: rgba(0, 0, 0, 0.04);
+  --icon-ring: rgba(0, 0, 0, 0.06);
 
-  --hint-color: rgba(0, 0, 0, 0.45);
+  --hint-color: rgba(0, 0, 0, 0.62);
   --hint-bg: rgba(0, 0, 0, 0.06);
+}
+
+.row.selected {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.row.selected .row-sub {
+  color: rgba(0, 0, 0, 0.74);
 }

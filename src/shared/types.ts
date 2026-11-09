@@ -89,6 +89,15 @@ export interface UiOverrides {
 }
 
 export type Backdrop = 'acrylic' | 'mica' | 'tabbed' | 'none'
+
+/**
+ * How the launcher window is actually painted, which is not always what
+ * `backdrop` asks for.
+ * - `native` — DWM is drawing acrylic, mica or tabbed.
+ * - `fallback` — a material was requested, but this Windows will not draw one.
+ * - `clear` — no material; the theme's own alpha shows a sharp desktop.
+ */
+export type MaterialMode = 'native' | 'fallback' | 'clear'
 /** 'fixed' always uses `theme`; 'system' switches with the Windows setting. */
 export type ColorScheme = 'fixed' | 'system'
 export type ScreenChoice = 'cursor' | 'primary' | 'focus'
@@ -152,6 +161,8 @@ export interface Bootstrap {
   activeTheme: string
   /** Windows system accent colour as `#rrggbb`, when ui.useWindowsAccent is on. */
   accentColor: string | null
+  /** Resolved from `config.backdrop` plus what this OS will actually draw. */
+  material: MaterialMode
   version: string
   /** Entries indexed so far; 0 means the first scan has not finished. */
   indexCount: number

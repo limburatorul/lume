@@ -30,8 +30,10 @@ Each release lists SHA256 checksums for both files.
 
 `Lume.exe --settings` opens the settings window directly.
 
-Windows 11 x64. The frosted-glass backdrop needs 22H2 or newer; on anything
-older set **Background material** to `None` and use the opacity slider.
+Windows 11 x64. The frosted-glass backdrop needs 22H2 or newer, with
+transparency effects on. On anything older, or with that setting off, Lume
+paints a solid panel. **Background material** `None` is the sharp,
+see-through window, and the opacity slider is what controls it.
 
 ### Windows will warn you the first time
 
@@ -168,7 +170,15 @@ Save button, and everything is written straight to `config.json`.
 - **Opacity** decides how much of the theme colour covers that background. At
   100% the window is solid and the material stops mattering.
 
-Frosted glass is `acrylic` plus an opacity somewhere around 70–90%.
+Frosted glass is `acrylic` plus an opacity somewhere around 50–70%. Higher than
+that and the blur is buried under the tint, which is what used to read as a
+flat gray slab. The system blur is the only blur: a CSS `backdrop-filter` on
+top of it paints a gray patch, so the bundled themes do not use one.
+
+On Windows 10, and when **Transparency effects** are turned off, acrylic and
+mica cannot be drawn. Lume paints a solid panel in that case instead of tinting
+the gray Windows leaves behind. `None` is still available there for a sharp,
+see-through window.
 
 | Material | Effect |
 | --- | --- |
@@ -210,7 +220,7 @@ A theme overrides the ones it cares about:
 :root {
   /* Colour and alpha are separate so the opacity slider can drive the alpha. */
   --surface-rgb: 20 20 26;
-  --surface-opacity: 0.82;
+  --surface-opacity: 0.6;
   --radius: 16px;
   --row-height: 52px;
   --accent: #8b7cf6;
@@ -220,9 +230,10 @@ A theme overrides the ones it cares about:
 ```
 
 Themes are ordinary stylesheets, so anything CSS can do is available — gradients on
-the selected row, `backdrop-filter` on individual rows, `::after` highlights. See
-`themes/default.css` for a commented starting point, or copy any of `carbon.css`,
-`glass.css`, `light.css`.
+the selected row, a different radius, `::after` highlights. Leave `backdrop-filter`
+off the panel and the rows: over a system backdrop it blurs the window's own
+layer and reads as a gray patch. See `themes/default.css` for a commented
+starting point, or copy any of `carbon.css`, `glass.css`, `light.css`.
 
 The same launcher in `carbon` and `light` — no code changed, only the stylesheet:
 

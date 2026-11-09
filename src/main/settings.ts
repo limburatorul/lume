@@ -35,9 +35,10 @@ export const DEFAULT_CONFIG: Config = {
   // tools that assume ANSI would mangle a non-ASCII default on a round trip.
   placeholder: 'Search',
   ui: {
-    // Frosted glass by default: the Windows backdrop supplies the blur, this
-    // alpha supplies the body. Below ~0.5 the surface stops reading as a panel.
-    surfaceOpacity: 0.82,
+    // The Windows backdrop supplies the blur. This alpha is only a tint on top
+    // of it: near 1 the blur disappears into a flat slab, and below ~0.45 the
+    // type starts to lose the wallpaper behind it. 0.6 is the frosted default.
+    surfaceOpacity: 0.6,
     cornerRadius: null,
     rowHeight: null,
     iconSize: null,
@@ -104,6 +105,19 @@ function migrate(raw: Record<string, unknown>): Record<string, unknown> {
   if ('followCursorScreen' in out && !('searchWindowScreen' in out)) {
     out.searchWindowScreen = out.followCursorScreen ? 'cursor' : 'primary'
     delete out.followCursorScreen
+  }
+  // 0.82 was the default through 0.5.5, and it was written into every config
+  // on first launch. Painted over acrylic it left almost none of the blur, which
+  // is the muddy slab. Only that untouched default moves; a chosen value stays.
+  // Copy `ui` first: `out` shares the object that was read from disk.
+  if (out.ui && typeof out.ui === 'object') {
+    const backdrop = out.backdrop
+    const usesMaterial = backdrop === undefined || backdrop === 'acrylic' || backdrop === 'mica' || backdrop === 'tabbed'
+    const ui = { ...(out.ui as Record<string, unknown>) }
+    if (usesMaterial && typeof ui.surfaceOpacity === 'number' && Math.abs(ui.surfaceOpacity - 0.82) < 0.001) {
+      ui.surfaceOpacity = 0.6
+      out.ui = ui
+    }
   }
   // colorScheme used to name a colour; it now names a strategy. A saved
   // 'light' meant "always use themeLight", which is just a fixed theme.
